@@ -1,0 +1,7 @@
+{
+  "name": "VoxPop - AI Powered Feedback",
+  "description": "A modern customer feedback platform that uses Gemini AI to automatically categorize, analyze sentiment, and generate product roadmaps from user suggestions.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
