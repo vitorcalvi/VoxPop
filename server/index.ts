@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import { analyzeFeedback, generateRoadmapSummary, comprehensiveAnalyze, getModelConfig } from '../services/chutesService.js';
 
 dotenv.config();
 
@@ -67,6 +68,11 @@ const initDb = async () => {
 // Health check
 app.get('/api/health', async (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// AI Model Configuration
+app.get('/api/ai/models', async (req, res) => {
+  res.json(getModelConfig());
 });
 
 // Get all feedback with optional filters
@@ -216,24 +222,24 @@ app.post('/api/feedback/:id/vote', async (req, res) => {
   }
 });
 
-// AI Analysis
+// AI Analysis (Chutes Plus)
 app.post('/api/analyze', async (req, res) => {
   try {
     const { title, description, screenshot } = req.body;
-    // AI analysis disabled - return null to indicate no analysis available
-    res.json(null);
+    const result = await analyzeFeedback(title, description, screenshot);
+    res.json(result);
   } catch (error) {
     console.error('Error analyzing feedback:', error);
     res.status(500).json({ error: 'Failed to analyze feedback' });
   }
 });
 
-// Generate Roadmap
+// Generate Roadmap (Chutes Plus)
 app.post('/api/roadmap', async (req, res) => {
   try {
     const { feedbacks } = req.body;
-    // AI roadmap disabled - return placeholder
-    res.json({ summary: 'AI roadmap generation is not configured. Please configure an AI provider to enable this feature.' });
+    const summary = await generateRoadmapSummary(feedbacks);
+    res.json({ summary });
   } catch (error) {
     console.error('Error generating roadmap:', error);
     res.status(500).json({ error: 'Failed to generate roadmap' });
@@ -266,7 +272,7 @@ app.get('/api/user/votes/:userId', async (req, res) => {
   }
 });
 
-// Comprehensive AI Analysis Endpoint
+// Comprehensive AI Analysis Endpoint (Chutes Plus)
 app.post('/api/ai/comprehensive-analyze', async (req, res) => {
   try {
     const { subject, details, images } = req.body;
@@ -275,22 +281,14 @@ app.post('/api/ai/comprehensive-analyze', async (req, res) => {
       return res.status(400).json({ error: 'Subject and details are required' });
     }
 
-    // Generate AI summary based on inputs
-    const imageCount = images ? images.length : 0;
-    const summary = `Feedback submitted with subject: "${subject.substring(0, 50)}${subject.length > 50 ? '...' : ''}". ${imageCount > 0 ? `Includes ${imageCount} image${imageCount > 1 ? 's' : ''} for visual context. ` : ''}Details: ${details.substring(0, 100)}${details.length > 100 ? '...' : ''}. This feedback has been analyzed and is ready for review.`;
+    // Use Chutes Plus AI for comprehensive analysis
+    const result = await comprehensiveAnalyze(subject, details, images);
 
-    // Generate enhanced versions
-    const enhancedSubject = subject.charAt(0).toUpperCase() + subject.slice(1);
-    const enhancedDetails = details.length > 0 ? details + '\n\n[AI Analysis: This feedback has been processed and categorized.]' : details;
+    if (!result) {
+      return res.status(500).json({ error: 'AI analysis failed' });
+    }
 
-    res.json({
-      summary,
-      enhancedSubject,
-      enhancedDetails,
-      category: 'General',
-      sentiment: 'neutral',
-      aiInsight: summary
-    });
+    res.json(result);
   } catch (error) {
     console.error('Error in comprehensive AI analysis:', error);
     res.status(500).json({ error: 'Failed to analyze feedback' });
@@ -314,5 +312,12 @@ process.on('SIGTERM', async () => {
 initDb().then(() => {
   app.listen(PORT, () => {
     console.log(`🚀 Backend server running on http://localhost:${PORT}`);
+
+    // Check Chutes Plus API status
+    if (process.env.CHUTES_API_KEY) {
+      console.log('✅ Chutes Plus AI: Configured');
+    } else {
+      console.log('⚠️  Chutes Plus AI: Not configured (set CHUTES_API_KEY in .env)');
+    }
   });
 });
