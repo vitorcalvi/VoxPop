@@ -112,7 +112,7 @@ const AppContent: React.FC = () => {
           sentiment: 'neutral',
           aiInsight: 'Feedback submitted with AI analysis.',
           screenshots: newFeedback.screenshots,
-          status: 'open'
+          status: 'OPEN'
         })
       });
 

@@ -36,7 +36,7 @@ const initDb = async () => {
         description TEXT NOT NULL,
         category VARCHAR(100) NOT NULL,
         votes INTEGER DEFAULT 1,
-        status VARCHAR(20) DEFAULT 'open',
+        status VARCHAR(20) DEFAULT 'OPEN',
         sentiment VARCHAR(20),
         "aiInsight" TEXT,
         screenshot TEXT,
@@ -142,15 +142,15 @@ app.get('/api/categories', async (req, res) => {
 // Create feedback
 app.post('/api/feedback', async (req, res) => {
   try {
-    const { title, description, category, sentiment, aiInsight, screenshot, screenshots, status = 'open' } = req.body;
+    const { title, description, category, sentiment, aiInsight, screenshot, screenshots, status = 'OPEN' } = req.body;
     const id = Math.random().toString(36).substr(2, 9);
 
     // Handle both legacy single screenshot and new screenshots array
     const screenshotsArray = screenshots || (screenshot ? [screenshot] : []);
 
     const result = await pool.query(
-      `INSERT INTO feedback_items (id, title, description, category, sentiment, "aiInsight", screenshot, screenshots, status, votes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `INSERT INTO feedback_items (id, title, description, category, sentiment, "aiInsight", screenshot, screenshots, status, votes, "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
        RETURNING *`,
       [id, title, description, category, sentiment, aiInsight, screenshot || null, JSON.stringify(screenshotsArray), status, 1]
     );

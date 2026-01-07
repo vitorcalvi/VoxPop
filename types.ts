@@ -1,4 +1,4 @@
-export type FeedbackStatus = 'open' | 'planned' | 'in-progress' | 'completed' | 'closed';
+export type FeedbackStatus = 'OPEN' | 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CLOSED';
 
 export interface FeedbackItem {
   id: string;

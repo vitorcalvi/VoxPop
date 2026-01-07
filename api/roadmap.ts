@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { generateRoadmapSummary } from '../services/chutesService';
+import { generateRoadmapSummary } from './_chutesService.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS

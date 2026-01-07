@@ -1,4 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { getModelConfig } from './_chutesService.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
@@ -24,7 +25,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Test 1: Check if chutesService can be imported
   try {
-    const { getModelConfig } = await import('../services/chutesService');
     diagnostics.tests.chutesServiceImport = '✅ Success';
     diagnostics.tests.modelConfig = getModelConfig();
   } catch (error) {

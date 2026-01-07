@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { comprehensiveAnalyze } from '../../services/chutesService';
+import { comprehensiveAnalyze } from '../_chutesService.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS

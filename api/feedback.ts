@@ -20,7 +20,7 @@ const initDb = async () => {
         description TEXT NOT NULL,
         category VARCHAR(100) NOT NULL,
         votes INTEGER DEFAULT 1,
-        status VARCHAR(20) DEFAULT 'open',
+        status VARCHAR(20) DEFAULT 'OPEN',
         sentiment VARCHAR(20),
         "aiInsight" TEXT,
         screenshot TEXT,
@@ -89,7 +89,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Create feedback
     if (method === 'POST') {
-      const { title, description, category, sentiment, aiInsight, screenshot, status = 'open' } = body;
+      const { title, description, category, sentiment, aiInsight, screenshot, status = 'OPEN' } = body;
       const id = Math.random().toString(36).substr(2, 9);
       
       const result = await pool.query(

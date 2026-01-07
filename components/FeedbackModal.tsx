@@ -25,23 +25,23 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
   ];
 
   const statusColors: Record<string, string> = {
-    'open': 'bg-gray-100 text-gray-600 border-gray-200',
-    'planned': 'bg-blue-100 text-blue-600 border-blue-200',
-    'in-progress': 'bg-yellow-100 text-yellow-600 border-yellow-200',
-    'completed': 'bg-green-100 text-green-600 border-green-200',
-    'closed': 'bg-red-100 text-red-600 border-red-200',
+    'OPEN': 'bg-gray-100 text-gray-600 border-gray-200',
+    'PLANNED': 'bg-blue-100 text-blue-600 border-blue-200',
+    'IN_PROGRESS': 'bg-yellow-100 text-yellow-600 border-yellow-200',
+    'COMPLETED': 'bg-green-100 text-green-600 border-green-200',
+    'CLOSED': 'bg-red-100 text-red-600 border-red-200',
   };
 
-  const statusOptions: FeedbackStatus[] = ['open', 'planned', 'in-progress', 'completed', 'closed'];
+  const statusOptions: FeedbackStatus[] = ['OPEN', 'PLANNED', 'IN_PROGRESS', 'COMPLETED', 'CLOSED'];
   const categoryOptions = ['General', 'Feature', 'Bug', 'UI/UX', 'Performance', 'Security', 'Documentation'];
 
   const getStatusLabel = (status: string): string => {
     const statusMap: Record<string, string> = {
-      'open': t('status.open'),
-      'planned': t('status.planned'),
-      'in-progress': t('status.inProgress'),
-      'completed': t('status.completed'),
-      'closed': t('status.closed')
+      'OPEN': t('status.open'),
+      'PLANNED': t('status.planned'),
+      'IN_PROGRESS': t('status.inProgress'),
+      'COMPLETED': t('status.completed'),
+      'CLOSED': t('status.closed')
     };
     return statusMap[status] || status;
   };

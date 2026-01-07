@@ -420,7 +420,7 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
         description,
         category: 'General',
         votes: 1,
-        status: 'open',
+        status: 'OPEN',
         createdAt: new Date().toISOString(),
         screenshots: screenshots.length > 0 ? screenshots : undefined
       };
