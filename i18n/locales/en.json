@@ -115,6 +115,7 @@
     "deleteFailed": "Failed to delete feedback. Please try again.",
     "analysisFailed": "AI analysis failed. Please try again.",
     "roadmapFailed": "Failed to generate roadmap. Please try again.",
+    "payloadTooLarge": "Images are too large. Please use fewer or smaller images (max 4MB total).",
     "tryAgain": "Please try again"
   },
   "datetime": {

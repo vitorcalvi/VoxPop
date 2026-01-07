@@ -75,18 +75,65 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
     setCurrentStep(ANALYSIS_STEPS.length - 1);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Compress image to reduce payload size for Vercel's 4.5MB limit
+  const compressImage = (file: File, maxWidth: number = 1200, quality: number = 0.7): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let { width, height } = img;
+
+          // Scale down if larger than maxWidth
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Failed to get canvas context'));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convert to JPEG with compression (smaller than PNG)
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedDataUrl);
+        };
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
 
-    files.forEach((file) => {
+    for (const file of files) {
       if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setScreenshots((prev) => [...prev, reader.result as string]);
-        };
-        reader.readAsDataURL(file);
+        try {
+          // Compress image before storing (reduces ~80% size typically)
+          const compressedImage = await compressImage(file);
+          setScreenshots((prev) => [...prev, compressedImage]);
+        } catch (error) {
+          console.error('Image compression failed:', error);
+          // Fallback to original if compression fails
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setScreenshots((prev) => [...prev, reader.result as string]);
+          };
+          reader.readAsDataURL(file);
+        }
       }
-    });
+    }
 
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -95,8 +142,33 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
     setScreenshots((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
 
+  // Calculate payload size in bytes
+  const calculatePayloadSize = (data: object): number => {
+    return new Blob([JSON.stringify(data)]).size;
+  };
+
+  // Max payload size (4MB to stay under Vercel's 4.5MB limit with margin)
+  const MAX_PAYLOAD_SIZE = 4 * 1024 * 1024;
+
   const handleAIPostFeedback = async () => {
     if (!title || !description || isAnalyzing || isSubmitting) return;
+
+    // Validate payload size before sending
+    const payload = {
+      subject: title,
+      details: description,
+      images: screenshots
+    };
+
+    const payloadSize = calculatePayloadSize(payload);
+    const payloadSizeMB = (payloadSize / (1024 * 1024)).toFixed(2);
+
+    console.log(`📦 Payload size: ${payloadSizeMB} MB`);
+
+    if (payloadSize > MAX_PAYLOAD_SIZE) {
+      alert(t('errors.payloadTooLarge') || `Images too large (${payloadSizeMB}MB). Please use fewer or smaller images.`);
+      return;
+    }
 
     setIsAnalyzing(true);
     setAiSummary(null);
@@ -106,11 +178,7 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
       const response = await fetch(`${getApiBase()}/ai/comprehensive-analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subject: title,
-          details: description,
-          images: screenshots
-        })
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {

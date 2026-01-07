@@ -20,10 +20,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log('📝 comprehensive-analyze request received');
     const { subject, details, images } = req.body;
 
+    // Calculate and log payload size for debugging
+    const payloadSize = JSON.stringify(req.body).length;
+    const payloadSizeMB = (payloadSize / (1024 * 1024)).toFixed(2);
+    const imageSizes = images?.map((img: string, i: number) =>
+      `Image ${i + 1}: ${(img?.length / 1024).toFixed(1)}KB`
+    ) || [];
+
     console.log('📦 Request data:', {
       subject,
       details: details?.substring(0, 100),
-      imagesCount: images?.length
+      imagesCount: images?.length,
+      payloadSize: `${payloadSizeMB} MB`,
+      imageSizes
     });
 
     if (!subject || !details) {

@@ -115,6 +115,7 @@
     "deleteFailed": "Error al eliminar comentario. Por favor, inténtalo de nuevo.",
     "analysisFailed": "El análisis IA falló. Por favor, inténtalo de nuevo.",
     "roadmapFailed": "Error al generar el roadmap. Por favor, inténtalo de nuevo.",
+    "payloadTooLarge": "Las imágenes son demasiado grandes. Por favor, usa menos o más pequeñas (máximo 4MB total).",
     "tryAgain": "Por favor, inténtalo de nuevo"
   },
   "datetime": {

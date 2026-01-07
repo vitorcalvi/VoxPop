@@ -115,6 +115,7 @@
     "deleteFailed": "Falha ao excluir feedback. Por favor, tente novamente.",
     "analysisFailed": "A análise IA falhou. Por favor, tente novamente.",
     "roadmapFailed": "Falha ao gerar o roadmap. Por favor, tente novamente.",
+    "payloadTooLarge": "As imagens são muito grandes. Por favor, use menos ou menores (máximo 4MB total).",
     "tryAgain": "Por favor, tente novamente"
   },
   "datetime": {
