@@ -17,6 +17,66 @@ const statusColors: Record<string, string> = {
 };
 
 export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote }) => {
+  // Support both legacy single screenshot and new screenshots array
+  const screenshots = feedback.screenshots || (feedback.screenshot ? [feedback.screenshot] : []);
+  const hasScreenshots = screenshots.length > 0;
+
+  const openScreenshot = (screenshot: string) => {
+    const image = new Image();
+    image.src = screenshot;
+    const w = window.open('', '_blank');
+    if (w) {
+      w.document.write(`
+        <html>
+          <head><title>Screenshot - VoxPop</title></head>
+          <body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#000;">
+            <img src="${screenshot}" style="max-width:100%;max-height:100vh;object-fit:contain;" onclick="window.close()" />
+          </body>
+        </html>
+      `);
+    }
+  };
+
+  const openGallery = () => {
+    const w = window.open('', '_blank');
+    if (w) {
+      const imagesHtml = feedback.screenshots?.map((s, i) => `
+        <div style="margin-bottom:20px;cursor:pointer;" onclick="window.open('${s}', '_blank')">
+          <img src="${s}" style="max-width:100%;max-height:80vh;object-fit:contain;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.3);" />
+          <p style="color:#666;text-align:center;margin-top:8px;font-size:12px;">Image ${i + 1} of ${feedback.screenshots?.length}</p>
+        </div>
+      `).join('') || '';
+      
+      w.document.write(`
+        <html>
+          <head>
+            <title>Screenshots Gallery - VoxPop</title>
+            <style>
+              body { margin: 0; padding: 20px; background: #f5f5f5; font-family: system-ui, sans-serif; }
+              .gallery { max-width: 900px; margin: 0 auto; }
+              h2 { color: #333; margin-bottom: 20px; }
+            </style>
+          </head>
+          <body>
+            <div class="gallery">
+              <h2>${feedback.title}</h2>
+              ${imagesHtml}
+            </div>
+          </body>
+        </html>
+      `);
+    }
+  };
+
+  const getMosaicClass = () => {
+    const count = screenshots.length;
+    if (count === 1) return 'grid-cols-1';
+    if (count === 2) return 'grid-cols-2';
+    if (count === 3) return 'grid-cols-2 grid-rows-2';
+    if (count === 4) return 'grid-cols-2 grid-rows-2';
+    return 'grid-cols-2 grid-rows-2';
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:border-indigo-300 transition-all flex gap-4 group">
       {/* Vote Button */}
@@ -57,17 +117,46 @@ export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote }) =>
             <p className="text-gray-600 text-sm line-clamp-2 mb-3 leading-relaxed">{feedback.description}</p>
           </div>
           
-          {feedback.screenshot && (
+          {hasScreenshots && (
             <div className="flex-shrink-0">
-              <div className="relative group/thumb cursor-pointer" onClick={() => window.open(feedback.screenshot, '_blank')}>
-                <img 
-                  src={feedback.screenshot} 
-                  alt="Visual Context" 
-                  className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg ring-1 ring-gray-200 group-hover/thumb:ring-indigo-400 transition-all"
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/thumb:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                  <i className="fa-solid fa-expand text-white text-xs"></i>
+              <div 
+                className={`relative ${feedback.screenshots && feedback.screenshots.length > 1 ? 'w-24' : 'w-20'}`}
+                onClick={feedback.screenshots && feedback.screenshots.length > 1 ? openGallery : () => openScreenshot(screenshots[0])}
+              >
+                {feedback.screenshots && feedback.screenshots.length > 1 ? (
+                  // Mosaic display for multiple screenshots
+                  <div className={`grid ${getMosaicClass()} gap-0.5 w-24 h-20 overflow-hidden rounded-lg ring-1 ring-gray-200 group-hover/thumb:ring-indigo-400 transition-all cursor-pointer`}>
+                    {feedback.screenshots.slice(0, 4).map((screenshot, index) => (
+                      <div key={index} className="relative overflow-hidden">
+                        <img 
+                          src={screenshot} 
+                          alt={`Screenshot ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        {index === 3 && feedback.screenshots && feedback.screenshots.length > 4 && (
+                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                            <span className="text-white font-bold text-xs">+{feedback.screenshots.length - 4}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  // Single screenshot display (legacy support)
+                  <img 
+                    src={screenshots[0]} 
+                    alt="Visual Context" 
+                    className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg ring-1 ring-gray-200 group-hover/thumb:ring-indigo-400 transition-all"
+                  />
+                )}
+                <div className="absolute inset-0 bg-black/0 group-hover/thumb:bg-black/10 transition-opacity rounded-lg flex items-center justify-center">
+                  <i className="fa-solid fa-expand text-white text-xs opacity-0 group-hover/thumb:opacity-100 transition-all drop-shadow-lg"></i>
                 </div>
+                {feedback.screenshots && feedback.screenshots.length > 1 && (
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">
+                    {feedback.screenshots.length}
+                  </div>
+                )}
               </div>
             </div>
           )}

@@ -1,4 +1,3 @@
-
 export type FeedbackStatus = 'open' | 'planned' | 'in-progress' | 'completed' | 'closed';
 
 export interface FeedbackItem {
@@ -8,10 +7,11 @@ export interface FeedbackItem {
   category: string;
   votes: number;
   status: FeedbackStatus;
-  createdAt: number;
+  createdAt: string;
   sentiment?: 'positive' | 'neutral' | 'negative';
   aiInsight?: string;
-  screenshot?: string; // Base64 encoded image
+  screenshot?: string; // Legacy single screenshot
+  screenshots?: string[]; // Multiple screenshots as array
 }
 
 export interface AIAnalysisResult {
