@@ -8,6 +8,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // Feedback items model
@@ -44,4 +45,25 @@ enum FeedbackStatus {
   IN_PROGRESS
   COMPLETED
   CLOSED
+}
+
+// User model for GitHub OAuth authentication
+model User {
+  id            String    @id @default(uuid())
+  githubId      String    @unique
+  username      String
+  email         String    @unique
+  avatarUrl     String?
+  role          UserRole  @default(USER)
+  accessToken   String?
+  refreshToken  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  ADMIN
 }

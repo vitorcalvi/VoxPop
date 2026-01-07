@@ -1,16 +1,22 @@
+// Load environment variables FIRST, before any other imports
+import dotenv from 'dotenv';
+import path from 'path';
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { Pool } from 'pg';
-import dotenv from 'dotenv';
 import { analyzeFeedback, generateRoadmapSummary, comprehensiveAnalyze, getModelConfig } from '../services/chutesService.js';
-
-dotenv.config();
+import authRoutes from './auth.js';
+import { authenticateUser, authenticateUserFromCookie, requireAdmin, handleAuthError } from './auth-middleware.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
+app.use(cookieParser());
 app.use(express.json({ limit: '10mb' })); // Support larger payloads for base64 images
 
 // PostgreSQL Connection
@@ -294,6 +300,65 @@ app.post('/api/ai/comprehensive-analyze', async (req, res) => {
     res.status(500).json({ error: 'Failed to analyze feedback' });
   }
 });
+
+// Authentication routes
+app.use('/api/auth', authRoutes);
+
+// Example protected route - requires authentication
+app.get('/api/protected/dashboard', authenticateUserFromCookie, (req, res) => {
+  res.json({
+    message: 'Welcome to the protected dashboard!',
+    user: req.user,
+  });
+});
+
+// Example admin-only route - requires authentication AND admin role
+app.get('/api/admin/users', authenticateUserFromCookie, requireAdmin, (req, res) => {
+  res.json({
+    message: 'Admin-only route accessed successfully',
+    adminUser: req.user,
+    // You would fetch actual users here
+  });
+});
+
+// Example of creating protected feedback (requires authentication)
+app.post('/api/protected/feedback', authenticateUserFromCookie, async (req, res) => {
+  try {
+    const { title, description, category } = req.body;
+    const userId = req.user?.userId;
+
+    // Check if authenticated user has role info in request
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO feedback_items (id, title, description, category, votes)
+       VALUES ($1, $2, $3, $4, 1)
+       RETURNING *`,
+      [Math.random().toString(36).substr(2, 9), title, description, category]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error creating protected feedback:', error);
+    res.status(500).json({ error: 'Failed to create feedback' });
+  }
+});
+
+// Example admin-only feedback deletion
+app.delete('/api/admin/feedback/:id', authenticateUserFromCookie, requireAdmin, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM feedback_items WHERE id = $1', [req.params.id]);
+    res.json({ message: 'Feedback deleted by admin' });
+  } catch (error) {
+    console.error('Error deleting feedback:', error);
+    res.status(500).json({ error: 'Failed to delete feedback' });
+  }
+});
+
+// Error handler for authentication errors
+app.use(handleAuthError);
 
 // Graceful shutdown
 process.on('SIGINT', async () => {

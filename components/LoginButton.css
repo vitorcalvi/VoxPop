@@ -1,0 +1,135 @@
+.login-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #e5e7eb;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.user-name {
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.875rem;
+}
+
+.user-role {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.user-role.admin {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.user-role.user {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.github-login-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #24292f;
+  color: white;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.github-login-btn:hover:not(:disabled) {
+  background-color: #30363d;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.github-login-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.github-login-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.github-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.logout-btn {
+  padding: 0.5rem 1rem;
+  background-color: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logout-btn:hover {
+  background-color: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.loading-spinner {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.error-message {
+  padding: 0.75rem 1rem;
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .login-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .user-info {
+    width: 100%;
+  }
+
+  .github-login-btn {
+    width: 100%;
+  }
+
+  .logout-btn {
+    width: 100%;
+  }
+}
