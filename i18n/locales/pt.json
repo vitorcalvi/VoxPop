@@ -1,0 +1,130 @@
+{
+  "common": {
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "close": "Fechar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "all": "Todos",
+    "yes": "Sim",
+    "no": "Não",
+    "confirm": "Confirmar",
+    "retry": "Tentar novamente"
+  },
+  "nav": {
+    "adminPanel": "Painel Admin",
+    "online": "Online",
+    "searchPlaceholder": "Buscar feedback...",
+    "settings": "Configurações"
+  },
+  "sidebar": {
+    "filterByCategory": "Filtrar por Categoria",
+    "allFeedback": "Todos os Feedbacks",
+    "multimodalAI": "IA Multimodal",
+    "multimodalDescription": "Envie capturas de tela para o Gemini identificar bugs e padrões de UI instantaneamente.",
+    "aiRoadmapVision": "Visão IA do Roadmap"
+  },
+  "categories": {
+    "all": "Todos",
+    "general": "Geral",
+    "feature": "Funcionalidade",
+    "bug": "Bug",
+    "uiux": "UI/UX",
+    "performance": "Performance",
+    "security": "Segurança",
+    "documentation": "Documentação"
+  },
+  "status": {
+    "open": "Aberto",
+    "planned": "Planejado",
+    "inProgress": "Em Progresso",
+    "completed": "Concluído",
+    "closed": "Fechado"
+  },
+  "sentiment": {
+    "positive": "Positivo",
+    "neutral": "Neutro",
+    "negative": "Negativo"
+  },
+  "priority": {
+    "critical": "Crítico",
+    "high": "Alto",
+    "medium": "Médio",
+    "low": "Baixo"
+  },
+  "feedbackForm": {
+    "title": "Enviar Novo Feedback",
+    "subjectLabel": "Assunto",
+    "subjectPlaceholder": "O que devemos melhorar?",
+    "detailsLabel": "Detalhes",
+    "detailsPlaceholder": "Forneça contexto ou explique o problema...",
+    "visualContextLabel": "Contexto Visual",
+    "attachScreenshot": "Anexar Captura",
+    "attachDescription": "Adicione imagens para ilustrar seu feedback",
+    "addMore": "Adicionar Mais",
+    "clearAll": "Limpar Tudo",
+    "imagesAttached": "imagens anexadas",
+    "imageAttached": "imagem anexada",
+    "aiPostFeedback": "Publicar com IA",
+    "analyzing": "Analisando...",
+    "analysisComplete": "Análise completa - Pronto para enviar",
+    "attachScreenshotsToEnable": "Anexe capturas para habilitar a análise IA",
+    "aiWillAnalyze": "A IA vai analisar e resumir seu feedback"
+  },
+  "aiAnalysis": {
+    "inProgress": "Análise IA em Progresso",
+    "initializing": "Inicializando IA...",
+    "analyzingText": "Analisando conteúdo de texto...",
+    "processingImages": "Processando imagens...",
+    "generatingInsights": "Gerando insights...",
+    "finalizing": "Finalizando análise...",
+    "preparingSummary": "Preparando Resumo IA...",
+    "summaryComplete": "Resumo IA Completo",
+    "aiInsight": "Insight IA",
+    "aiAnalyze": "Analisar com IA",
+    "analysisEnhanced": "Título, descrição, categoria e sentimento foram aprimorados"
+  },
+  "feedbackList": {
+    "latestFeedback": "Feedbacks Recentes",
+    "showingCount": "Exibindo {count} sugestões da comunidade",
+    "nothingYet": "Nada aqui ainda",
+    "beFirst": "Seja o primeiro a sugerir uma melhoria!",
+    "votes": "votos"
+  },
+  "feedbackModal": {
+    "feedbackDetails": "Detalhes do Feedback",
+    "id": "ID",
+    "created": "Criado em",
+    "confirmDelete": "Tem certeza que deseja excluir este feedback? Esta ação não pode ser desfeita."
+  },
+  "roadmap": {
+    "aiStrategyRoadmap": "Roadmap Estratégico IA",
+    "generatingRoadmap": "Gerando roadmap...",
+    "roadmapFailed": "Falha ao gerar o roadmap"
+  },
+  "errors": {
+    "loadFailed": "Falha ao carregar feedbacks. Por favor, tente novamente mais tarde.",
+    "submitFailed": "Falha ao enviar feedback. Por favor, tente novamente.",
+    "voteFailed": "Falha ao registrar voto. Por favor, tente novamente.",
+    "updateFailed": "Falha ao atualizar feedback. Por favor, tente novamente.",
+    "deleteFailed": "Falha ao excluir feedback. Por favor, tente novamente.",
+    "analysisFailed": "A análise IA falhou. Por favor, tente novamente.",
+    "roadmapFailed": "Falha ao gerar o roadmap. Por favor, tente novamente.",
+    "tryAgain": "Por favor, tente novamente"
+  },
+  "datetime": {
+    "today": "Hoje",
+    "yesterday": "Ontem",
+    "daysAgo": "Há {count} dias",
+    "weeksAgo": "Há {count} semanas",
+    "monthsAgo": "Há {count} meses",
+    "justNow": "Agora mesmo",
+    "minutesAgo": "Há {count} minutos",
+    "hoursAgo": "Há {count} horas"
+  }
+}

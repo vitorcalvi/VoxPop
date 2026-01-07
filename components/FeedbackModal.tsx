@@ -1,14 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FeedbackItem, FeedbackStatus } from '../types';
-
-// Analysis steps for progress tracking
-const ANALYSIS_STEPS = [
-  { id: 'init', label: 'Initializing AI...', icon: 'fa-cog' },
-  { id: 'text', label: 'Analyzing text content...', icon: 'fa-file-lines' },
-  { id: 'images', label: 'Processing images...', icon: 'fa-images' },
-  { id: 'insights', label: 'Generating insights...', icon: 'fa-lightbulb' },
-  { id: 'final', label: 'Finalizing analysis...', icon: 'fa-wand-magic-sparkles' },
-];
+import { useI18n } from '../i18n';
 
 interface Props {
   feedback: FeedbackItem | null;
@@ -18,20 +10,42 @@ interface Props {
   onDelete: (id: string) => void;
 }
 
-const statusColors: Record<string, string> = {
-  'open': 'bg-gray-100 text-gray-600 border-gray-200',
-  'planned': 'bg-blue-100 text-blue-600 border-blue-200',
-  'in-progress': 'bg-yellow-100 text-yellow-600 border-yellow-200',
-  'completed': 'bg-green-100 text-green-600 border-green-200',
-  'closed': 'bg-red-100 text-red-600 border-red-200',
-};
-
-const statusOptions: FeedbackStatus[] = ['open', 'planned', 'in-progress', 'completed', 'closed'];
-const categoryOptions = ['General', 'Feature', 'Bug', 'UI/UX', 'Performance', 'Security', 'Documentation'];
-
 const getApiBase = () => '/api';
 
 export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSave, onDelete }) => {
+  const { t, formatDate } = useI18n();
+
+  // Analysis steps for progress tracking
+  const ANALYSIS_STEPS = [
+    { id: 'init', label: t('aiAnalysis.initializing'), icon: 'fa-cog' },
+    { id: 'text', label: t('aiAnalysis.analyzingText'), icon: 'fa-file-lines' },
+    { id: 'images', label: t('aiAnalysis.processingImages'), icon: 'fa-images' },
+    { id: 'insights', label: t('aiAnalysis.generatingInsights'), icon: 'fa-lightbulb' },
+    { id: 'final', label: t('aiAnalysis.finalizing'), icon: 'fa-wand-magic-sparkles' },
+  ];
+
+  const statusColors: Record<string, string> = {
+    'open': 'bg-gray-100 text-gray-600 border-gray-200',
+    'planned': 'bg-blue-100 text-blue-600 border-blue-200',
+    'in-progress': 'bg-yellow-100 text-yellow-600 border-yellow-200',
+    'completed': 'bg-green-100 text-green-600 border-green-200',
+    'closed': 'bg-red-100 text-red-600 border-red-200',
+  };
+
+  const statusOptions: FeedbackStatus[] = ['open', 'planned', 'in-progress', 'completed', 'closed'];
+  const categoryOptions = ['General', 'Feature', 'Bug', 'UI/UX', 'Performance', 'Security', 'Documentation'];
+
+  const getStatusLabel = (status: string): string => {
+    const statusMap: Record<string, string> = {
+      'open': t('status.open'),
+      'planned': t('status.planned'),
+      'in-progress': t('status.inProgress'),
+      'completed': t('status.completed'),
+      'closed': t('status.closed')
+    };
+    return statusMap[status] || status;
+  };
+
   const [isEditing, setIsEditing] = useState(false);
   const [editedFeedback, setEditedFeedback] = useState<FeedbackItem | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -127,7 +141,7 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
   };
 
   const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete this feedback? This action cannot be undone.')) {
+    if (window.confirm(t('feedbackModal.confirmDelete'))) {
       onDelete(feedback.id);
     }
   };
@@ -174,7 +188,7 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
       stopProgressSimulation();
       setProgress(0);
       setCurrentStep(0);
-      alert('AI analysis failed. Please try again.');
+      alert(t('errors.analysisFailed'));
     } finally {
       setIsAnalyzing(false);
     }
@@ -197,9 +211,9 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
               <i className="fa-solid fa-message text-xl"></i>
             </div>
             <div>
-              <h2 className="text-xl font-black text-gray-900">Feedback Details</h2>
+              <h2 className="text-xl font-black text-gray-900">{t('feedbackModal.feedbackDetails')}</h2>
               <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">
-                ID: {feedback.id}
+                {t('feedbackModal.id')}: {feedback.id}
               </p>
             </div>
           </div>
@@ -214,12 +228,12 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
                   {isAnalyzing ? (
                     <>
                       <i className="fa-solid fa-wand-magic-sparkles animate-pulse"></i>
-                      Analyzing...
+                      {t('feedbackForm.analyzing')}
                     </>
                   ) : (
                     <>
                       <i className="fa-solid fa-wand-magic-sparkles"></i>
-                      AI Analyze
+                      {t('aiAnalysis.aiAnalyze')}
                     </>
                   )}
                 </button>
@@ -228,7 +242,7 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
                   className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-sm font-bold hover:bg-indigo-100 transition-colors flex items-center gap-2"
                 >
                   <i className="fa-solid fa-pen"></i>
-                  Edit
+                  {t('common.edit')}
                 </button>
               </>
             ) : (
@@ -241,12 +255,12 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
                   {isAnalyzing ? (
                     <>
                       <i className="fa-solid fa-wand-magic-sparkles animate-pulse"></i>
-                      Analyzing...
+                      {t('feedbackForm.analyzing')}
                     </>
                   ) : (
                     <>
                       <i className="fa-solid fa-wand-magic-sparkles"></i>
-                      AI Analyze
+                      {t('aiAnalysis.aiAnalyze')}
                     </>
                   )}
                 </button>
@@ -258,7 +272,7 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
                   }}
                   className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={handleSave}
@@ -270,7 +284,7 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
                   ) : (
                     <i className="fa-solid fa-check"></i>
                   )}
-                  Save
+                  {t('common.save')}
                 </button>
               </>
             )}
@@ -290,7 +304,7 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
             <div className="flex flex-wrap gap-4">
               <div className="flex-1 min-w-[200px]">
                 <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
-                  Status
+                  {t('status.open').split(' ')[0] === t('status.open') ? 'Status' : 'Estado'}
                 </label>
                 {isEditing ? (
                   <select
@@ -299,18 +313,18 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none font-medium"
                   >
                     {statusOptions.map(status => (
-                      <option key={status} value={status}>{status}</option>
+                      <option key={status} value={status}>{getStatusLabel(status)}</option>
                     ))}
                   </select>
                 ) : (
                   <span className={`inline-block px-3 py-1.5 rounded-lg text-sm font-bold border ${statusColors[editedFeedback.status]}`}>
-                    {editedFeedback.status}
+                    {getStatusLabel(editedFeedback.status)}
                   </span>
                 )}
               </div>
               <div className="flex-1 min-w-[200px]">
                 <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
-                  Category
+                  {t('categories.general') === 'General' ? 'Category' : 'Categoría'}
                 </label>
                 {isEditing ? (
                   <select
@@ -330,7 +344,7 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
               </div>
               <div className="flex-1 min-w-[120px]">
                 <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
-                  Votes
+                  {t('feedbackList.votes')}
                 </label>
                 <div className="flex items-center gap-2">
                   <i className="fa-solid fa-chevron-up text-indigo-500"></i>
@@ -352,7 +366,7 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
             {/* Title */}
             <div>
               <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
-                Subject
+                {t('feedbackForm.subjectLabel')}
               </label>
               {isEditing ? (
                 <input
@@ -369,7 +383,7 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
             {/* Description */}
             <div>
               <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
-                Details
+                {t('feedbackForm.detailsLabel')}
               </label>
               {isEditing ? (
                 <textarea
@@ -387,7 +401,7 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
             {screenshots.length > 0 && (
               <div>
                 <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">
-                  Visual Context ({screenshots.length} image{screenshots.length !== 1 ? 's' : ''})
+                  {t('feedbackForm.visualContextLabel')} ({screenshots.length} {screenshots.length !== 1 ? t('feedbackForm.imagesAttached') : t('feedbackForm.imageAttached')})
                 </label>
                 <div className="space-y-4">
                   {/* Main Image */}
@@ -439,7 +453,7 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
                       <i className={`fa-solid ${ANALYSIS_STEPS[currentStep].icon} text-indigo-600 animate-pulse`}></i>
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-indigo-900">AI Analysis in Progress</h4>
+                      <h4 className="text-sm font-bold text-indigo-900">{t('aiAnalysis.inProgress')}</h4>
                       <p className="text-xs text-indigo-600 font-medium">{ANALYSIS_STEPS[currentStep].label}</p>
                     </div>
                   </div>
@@ -490,7 +504,7 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
                 <div className="space-y-3 pt-2">
                   <div className="flex items-center gap-2 text-xs text-indigo-600 font-bold uppercase tracking-wider">
                     <i className="fa-solid fa-robot"></i>
-                    Preparing AI Summary...
+                    {t('aiAnalysis.preparingSummary')}
                   </div>
                   <div className="space-y-2">
                     <div className="h-3 bg-indigo-200/60 rounded-full animate-pulse" style={{ width: '90%' }} />
@@ -506,12 +520,12 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
               <div className="bg-green-50 border-l-4 border-green-500 p-5 rounded-r-xl animate-in fade-in duration-300">
                 <div className="flex items-center gap-2 text-green-700 text-xs font-black uppercase tracking-wider mb-2">
                   <i className="fa-solid fa-check-circle"></i>
-                  AI Analysis Complete
+                  {t('aiAnalysis.summaryComplete')}
                 </div>
                 <p className="text-green-900/80 font-medium">{aiSummary}</p>
                 <p className="text-xs text-green-600 mt-2 font-medium">
                   <i className="fa-solid fa-check-circle mr-1"></i>
-                  Title, description, category, and sentiment have been enhanced
+                  {t('aiAnalysis.analysisEnhanced')}
                 </p>
               </div>
             )}
@@ -521,7 +535,7 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
               <div className="bg-indigo-50 border-l-4 border-indigo-500 p-5 rounded-r-xl">
                 <div className="flex items-center gap-2 text-indigo-700 text-xs font-black uppercase tracking-wider mb-2">
                   <i className="fa-solid fa-wand-magic-sparkles"></i>
-                  AI Insight
+                  {t('aiAnalysis.aiInsight')}
                 </div>
                 <p className="text-indigo-900/80 font-medium">{editedFeedback.aiInsight}</p>
               </div>
@@ -531,14 +545,20 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
             <div className="flex items-center justify-between pt-4 border-t border-gray-100">
               <div className="text-sm text-gray-400 font-medium">
                 <i className="fa-regular fa-clock mr-2"></i>
-                Created: {new Date(editedFeedback.createdAt).toLocaleString()}
+                {t('feedbackModal.created')}: {formatDate(editedFeedback.createdAt, {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
               </div>
               <button
                 onClick={handleDelete}
                 className="px-4 py-2 text-red-500 hover:bg-red-50 rounded-xl text-sm font-bold transition-colors flex items-center gap-2"
               >
                 <i className="fa-solid fa-trash-can"></i>
-                Delete
+                {t('common.delete')}
               </button>
             </div>
           </div>

@@ -3,6 +3,8 @@ import { FeedbackForm } from './components/FeedbackForm';
 import { FeedbackCard } from './components/FeedbackCard';
 import { FeedbackModal } from './components/FeedbackModal';
 import { Sidebar } from './components/Sidebar';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { I18nProvider, useI18n } from './i18n';
 import { FeedbackItem } from './types';
 
 const INITIAL_DATA: FeedbackItem[] = [];
@@ -10,7 +12,8 @@ const INITIAL_DATA: FeedbackItem[] = [];
 // API helper function
 const getApiBase = () => '/api';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const { t } = useI18n();
   const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>(INITIAL_DATA);
   const [votedIds, setVotedIds] = useState<string[]>([]);
   const [filter, setFilter] = useState('All');
@@ -64,25 +67,18 @@ const App: React.FC = () => {
       }
       const data = await response.json();
       setFeedbacks(data);
-      
-      // Update votedIds based on feedback items returned from database
-      // Note: This is a simplified approach. For full consistency,
-      // you should fetch user's votes from a dedicated endpoint
+
       setVotedIds(prev => {
         const newVotedIds = [...prev];
         data.forEach((item: FeedbackItem) => {
-          // If item has votes > 0 and user hasn't voted, assume they might have voted
-          // This is a workaround - ideally fetch from /api/user/votes endpoint
           if (!newVotedIds.includes(item.id) && item.votes > 0) {
-            // We can't determine from current data structure if this user voted
-            // This would require a dedicated endpoint to fetch user's votes
           }
         });
         return newVotedIds;
       });
     } catch (error) {
       console.error('Error fetching feedbacks:', error);
-      setErrorMessage('Failed to load feedback. Please try again later.');
+      setErrorMessage(t('errors.loadFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -95,7 +91,6 @@ const App: React.FC = () => {
 
   const handleAddFeedback = async (newFeedback: FeedbackItem) => {
     try {
-      // Create feedback directly (AI analysis already done in form)
       const createResponse = await fetch(`${getApiBase()}/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -109,52 +104,51 @@ const App: React.FC = () => {
           status: 'open'
         })
       });
-      
+
       if (!createResponse.ok) {
         throw new Error(`Create failed: ${createResponse.status}`);
       }
-      
+
       const created = await createResponse.json();
-      
+
       setFeedbacks(prev => [created, ...prev]);
       setErrorMessage(null);
     } catch (error) {
       console.error('Error adding feedback:', error);
-      setErrorMessage('Failed to submit feedback. Please try again.');
-      throw error; // Re-throw to let FeedbackForm handle it
+      setErrorMessage(t('errors.submitFailed'));
+      throw error;
     }
   };
 
   const handleVote = async (id: string) => {
     const hasVoted = votedIds.includes(id);
-    
+
     try {
       const response = await fetch(`${getApiBase()}/feedback/${id}/vote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId,
-          vote: !hasVoted // true for upvote, false to toggle off
+          vote: !hasVoted
         })
       });
-      
+
       if (!response.ok) {
         throw new Error(`Vote failed: ${response.status}`);
       }
-      
+
       const updated = await response.json();
 
-      // Update local state
-      setVotedIds(prev => 
+      setVotedIds(prev =>
         hasVoted ? prev.filter(vId => vId !== id) : [...prev, id]
       );
-      setFeedbacks(prev => 
+      setFeedbacks(prev =>
         prev.map(f => f.id === id ? updated : f)
       );
       setErrorMessage(null);
     } catch (error) {
       console.error('Error voting:', error);
-      setErrorMessage('Failed to record vote. Please try again.');
+      setErrorMessage(t('errors.voteFailed'));
     }
   };
 
@@ -164,7 +158,6 @@ const App: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      // Optimize payload: send only essential fields to avoid 413 Payload Too Large
       const optimizedFeedbacks = feedbacks.map(f => ({
         id: f.id,
         title: f.title,
@@ -191,7 +184,7 @@ const App: React.FC = () => {
       setRoadmapSummary(data.summary);
     } catch (error) {
       console.error('Error generating roadmap:', error);
-      setErrorMessage(`Failed to generate roadmap: ${error instanceof Error ? error.message : 'Please try again.'}`);
+      setErrorMessage(t('errors.roadmapFailed'));
     } finally {
       setIsGeneratingRoadmap(false);
     }
@@ -236,7 +229,7 @@ const App: React.FC = () => {
       setErrorMessage(null);
     } catch (error) {
       console.error('Error updating feedback:', error);
-      setErrorMessage('Failed to update feedback. Please try again.');
+      setErrorMessage(t('errors.updateFailed'));
       throw error;
     }
   };
@@ -257,7 +250,7 @@ const App: React.FC = () => {
       setErrorMessage(null);
     } catch (error) {
       console.error('Error deleting feedback:', error);
-      setErrorMessage('Failed to delete feedback. Please try again.');
+      setErrorMessage(t('errors.deleteFailed'));
     }
   };
 
@@ -267,19 +260,19 @@ const App: React.FC = () => {
       <nav className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 group cursor-pointer" onClick={() => window.location.reload()}>
-            <img 
-              src="https://www.dyagnosys.com/logo.webp" 
-              alt="Dyagnosys" 
+            <img
+              src="https://www.dyagnosys.com/logo.webp"
+              alt="Dyagnosys"
               className="w-10 h-10 rounded-lg object-contain transition-transform group-hover:scale-105"
             />
           </div>
-          
+
           <div className="flex-1 max-w-lg mx-12 hidden md:block">
             <div className="relative group">
               <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-indigo-500 transition-colors"></i>
               <input
                 type="text"
-                placeholder="Search feedback..."
+                placeholder={t('nav.searchPlaceholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-12 pr-4 py-3 bg-gray-100/50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-100 transition-all outline-none font-medium text-sm"
@@ -288,11 +281,14 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
+             {/* Language Switcher */}
+             <LanguageSwitcher variant="dropdown" showLabel={true} />
+
              <div className="hidden sm:flex flex-col items-end mr-2">
-                <span className="text-xs font-bold text-gray-900">Admin Panel</span>
-                <span className="text-[9px] font-black text-green-500 uppercase tracking-widest">Online</span>
+                <span className="text-xs font-bold text-gray-900">{t('nav.adminPanel')}</span>
+                <span className="text-[9px] font-black text-green-500 uppercase tracking-widest">{t('nav.online')}</span>
              </div>
-             <div className="w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-colors cursor-pointer">
+             <div className="w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-colors cursor-pointer" title={t('nav.settings')}>
                 <i className="fa-solid fa-cog"></i>
              </div>
           </div>
@@ -319,21 +315,22 @@ const App: React.FC = () => {
 
       <main className="max-w-7xl mx-auto px-6 pt-10 pb-20">
         {isLoading ? (
-          <div className="flex items-center justify-center py-32">
+          <div className="flex flex-col items-center justify-center py-32 gap-4">
             <i className="fa-solid fa-spinner fa-spin text-4xl text-indigo-600"></i>
+            <span className="text-sm font-medium text-gray-500">{t('common.loading')}</span>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             {/* Sidebar */}
             <aside className="lg:col-span-3 lg:sticky lg:top-32 h-fit">
-              <Sidebar 
-                categories={categories} 
-                currentCategory={filter} 
-                onCategoryChange={setFilter} 
+              <Sidebar
+                categories={categories}
+                currentCategory={filter}
+                onCategoryChange={setFilter}
               />
-              
+
               <div className="mt-8 pt-8 border-t border-gray-100">
-                <button 
+                <button
                   onClick={handleGenerateRoadmap}
                   disabled={isGeneratingRoadmap || feedbacks.length === 0}
                   className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border border-indigo-100 text-indigo-700 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-50 hover:shadow-xl hover:shadow-indigo-100 transition-all disabled:opacity-50 group"
@@ -343,7 +340,7 @@ const App: React.FC = () => {
                   ) : (
                     <i className="fa-solid fa-compass group-hover:rotate-45 transition-transform"></i>
                   )}
-                  AI Roadmap Vision
+                  {t('sidebar.aiRoadmapVision')}
                 </button>
               </div>
             </aside>
@@ -353,9 +350,11 @@ const App: React.FC = () => {
               <div className="flex items-end justify-between">
                 <div>
                   <h2 className="text-3xl font-black text-gray-900 mb-1">
-                    {filter === 'All' ? 'Latest Feedback' : filter}
+                    {filter === 'All' ? t('feedbackList.latestFeedback') : filter}
                   </h2>
-                  <p className="text-sm font-bold text-gray-400">Showing {feedbacks.length} community suggestions</p>
+                  <p className="text-sm font-bold text-gray-400">
+                    {t('feedbackList.showingCount', { count: feedbacks.length })}
+                  </p>
                 </div>
               </div>
 
@@ -370,7 +369,7 @@ const App: React.FC = () => {
                         <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
                           <i className="fa-solid fa-star"></i>
                         </div>
-                        <h3 className="font-black text-lg tracking-tight">AI Strategy Roadmap</h3>
+                        <h3 className="font-black text-lg tracking-tight">{t('roadmap.aiStrategyRoadmap')}</h3>
                       </div>
                       <button onClick={() => setRoadmapSummary(null)} className="w-8 h-8 rounded-full hover:bg-white/20 transition-colors flex items-center justify-center">
                         <i className="fa-solid fa-times"></i>
@@ -403,8 +402,8 @@ const App: React.FC = () => {
                     <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
                       <i className="fa-solid fa-folder-open text-3xl text-gray-200"></i>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-400">Nothing here yet</h3>
-                    <p className="text-sm text-gray-300 font-medium">Be the first to suggest an improvement!</p>
+                    <h3 className="text-xl font-bold text-gray-400">{t('feedbackList.nothingYet')}</h3>
+                    <p className="text-sm text-gray-300 font-medium">{t('feedbackList.beFirst')}</p>
                   </div>
                 )}
               </div>
@@ -427,6 +426,15 @@ const App: React.FC = () => {
         onDelete={handleDeleteFeedback}
       />
     </div>
+  );
+};
+
+// Main App component with I18nProvider
+const App: React.FC = () => {
+  return (
+    <I18nProvider>
+      <AppContent />
+    </I18nProvider>
   );
 };
 

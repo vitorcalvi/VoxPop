@@ -1,0 +1,130 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "search": "Search",
+    "filter": "Filter",
+    "all": "All",
+    "yes": "Yes",
+    "no": "No",
+    "confirm": "Confirm",
+    "retry": "Retry"
+  },
+  "nav": {
+    "adminPanel": "Admin Panel",
+    "online": "Online",
+    "searchPlaceholder": "Search feedback...",
+    "settings": "Settings"
+  },
+  "sidebar": {
+    "filterByCategory": "Filter by Category",
+    "allFeedback": "All Feedback",
+    "multimodalAI": "Multimodal AI",
+    "multimodalDescription": "Upload screenshots to help Gemini identify bugs and UI patterns instantly.",
+    "aiRoadmapVision": "AI Roadmap Vision"
+  },
+  "categories": {
+    "all": "All",
+    "general": "General",
+    "feature": "Feature",
+    "bug": "Bug",
+    "uiux": "UI/UX",
+    "performance": "Performance",
+    "security": "Security",
+    "documentation": "Documentation"
+  },
+  "status": {
+    "open": "Open",
+    "planned": "Planned",
+    "inProgress": "In Progress",
+    "completed": "Completed",
+    "closed": "Closed"
+  },
+  "sentiment": {
+    "positive": "Positive",
+    "neutral": "Neutral",
+    "negative": "Negative"
+  },
+  "priority": {
+    "critical": "Critical",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low"
+  },
+  "feedbackForm": {
+    "title": "Submit New Feedback",
+    "subjectLabel": "Subject",
+    "subjectPlaceholder": "What should we improve?",
+    "detailsLabel": "Details",
+    "detailsPlaceholder": "Provide context or explain the problem...",
+    "visualContextLabel": "Visual Context",
+    "attachScreenshot": "Attach Screenshot",
+    "attachDescription": "Add images to help illustrate your feedback",
+    "addMore": "Add More",
+    "clearAll": "Clear All",
+    "imagesAttached": "images attached",
+    "imageAttached": "image attached",
+    "aiPostFeedback": "AI Post Feedback",
+    "analyzing": "Analyzing...",
+    "analysisComplete": "Analysis complete - Ready to submit",
+    "attachScreenshotsToEnable": "Attach screenshots to enable AI analysis",
+    "aiWillAnalyze": "AI will analyze and summarize your feedback"
+  },
+  "aiAnalysis": {
+    "inProgress": "AI Analysis in Progress",
+    "initializing": "Initializing AI...",
+    "analyzingText": "Analyzing text content...",
+    "processingImages": "Processing images...",
+    "generatingInsights": "Generating insights...",
+    "finalizing": "Finalizing analysis...",
+    "preparingSummary": "Preparing AI Summary...",
+    "summaryComplete": "AI Summary Complete",
+    "aiInsight": "AI Insight",
+    "aiAnalyze": "AI Analyze",
+    "analysisEnhanced": "Title, description, category, and sentiment have been enhanced"
+  },
+  "feedbackList": {
+    "latestFeedback": "Latest Feedback",
+    "showingCount": "Showing {count} community suggestions",
+    "nothingYet": "Nothing here yet",
+    "beFirst": "Be the first to suggest an improvement!",
+    "votes": "votes"
+  },
+  "feedbackModal": {
+    "feedbackDetails": "Feedback Details",
+    "id": "ID",
+    "created": "Created",
+    "confirmDelete": "Are you sure you want to delete this feedback? This action cannot be undone."
+  },
+  "roadmap": {
+    "aiStrategyRoadmap": "AI Strategy Roadmap",
+    "generatingRoadmap": "Generating roadmap...",
+    "roadmapFailed": "Failed to generate roadmap"
+  },
+  "errors": {
+    "loadFailed": "Failed to load feedback. Please try again later.",
+    "submitFailed": "Failed to submit feedback. Please try again.",
+    "voteFailed": "Failed to record vote. Please try again.",
+    "updateFailed": "Failed to update feedback. Please try again.",
+    "deleteFailed": "Failed to delete feedback. Please try again.",
+    "analysisFailed": "AI analysis failed. Please try again.",
+    "roadmapFailed": "Failed to generate roadmap. Please try again.",
+    "tryAgain": "Please try again"
+  },
+  "datetime": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo": "{count} days ago",
+    "weeksAgo": "{count} weeks ago",
+    "monthsAgo": "{count} months ago",
+    "justNow": "Just now",
+    "minutesAgo": "{count} minutes ago",
+    "hoursAgo": "{count} hours ago"
+  }
+}

@@ -1,22 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FeedbackItem } from '../types';
+import { useI18n } from '../i18n';
 
 const getApiBase = () => '/api';
-
-// Analysis steps for progress tracking
-const ANALYSIS_STEPS = [
-  { id: 'init', label: 'Initializing AI...', icon: 'fa-cog' },
-  { id: 'text', label: 'Analyzing text content...', icon: 'fa-file-lines' },
-  { id: 'images', label: 'Processing images...', icon: 'fa-images' },
-  { id: 'insights', label: 'Generating insights...', icon: 'fa-lightbulb' },
-  { id: 'final', label: 'Finalizing analysis...', icon: 'fa-wand-magic-sparkles' },
-];
 
 interface Props {
   onAdd: (feedback: FeedbackItem) => void;
 }
 
 export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
+  const { t } = useI18n();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [screenshots, setScreenshots] = useState<string[]>([]);
@@ -28,6 +21,15 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
   const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Analysis steps for progress tracking
+  const ANALYSIS_STEPS = [
+    { id: 'init', label: t('aiAnalysis.initializing'), icon: 'fa-cog' },
+    { id: 'text', label: t('aiAnalysis.analyzingText'), icon: 'fa-file-lines' },
+    { id: 'images', label: t('aiAnalysis.processingImages'), icon: 'fa-images' },
+    { id: 'insights', label: t('aiAnalysis.generatingInsights'), icon: 'fa-lightbulb' },
+    { id: 'final', label: t('aiAnalysis.finalizing'), icon: 'fa-wand-magic-sparkles' },
+  ];
 
   // Cleanup progress interval on unmount
   useEffect(() => {
@@ -47,13 +49,12 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
     let prog = 0;
 
     progressIntervalRef.current = setInterval(() => {
-      prog += Math.random() * 3 + 1; // Random increment between 1-4%
+      prog += Math.random() * 3 + 1;
 
       if (prog >= 100) {
-        prog = 95; // Cap at 95% until actual completion
+        prog = 95;
       }
 
-      // Move to next step at certain thresholds
       if (prog > 20 && step === 0) step = 1;
       if (prog > 40 && step === 1) step = 2;
       if (prog > 60 && step === 2) step = 3;
@@ -76,7 +77,7 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    
+
     files.forEach((file) => {
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
@@ -86,7 +87,7 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
         reader.readAsDataURL(file);
       }
     });
-    
+
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -121,7 +122,6 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
       setAiSummary(data.summary);
       setIsAnalyzed(true);
 
-      // Update title and description with AI-enhanced versions
       if (data.enhancedSubject) {
         setTitle(data.enhancedSubject);
       }
@@ -133,7 +133,7 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
       stopProgressSimulation();
       setProgress(0);
       setCurrentStep(0);
-      alert('AI analysis failed. Please try again.');
+      alert(t('errors.analysisFailed'));
     } finally {
       setIsAnalyzing(false);
     }
@@ -141,17 +141,16 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    
-    // Only allow submission after analysis is complete
+
     if (!isAnalyzed || !title || !description || isSubmitting) {
       if (!isAnalyzed) {
-        alert('Please complete AI analysis before submitting.');
+        alert(t('feedbackForm.attachScreenshotsToEnable'));
       }
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       const newFeedback: FeedbackItem = {
         id: '',
@@ -181,43 +180,49 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8 border border-indigo-50 relative overflow-hidden z-10">
       <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/50 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none" style={{ zIndex: -1 }}></div>
-      
+
       <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
         <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600">
           <i className="fa-solid fa-plus"></i>
         </div>
-        Submit New Feedback
+        {t('feedbackForm.title')}
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Subject</label>
+          <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
+            {t('feedbackForm.subjectLabel')}
+          </label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full px-4 py-3 border border-gray-100 bg-gray-50/50 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 focus:bg-white transition-all outline-none font-medium"
-            placeholder="What should we improve?"
-            disabled={isSubmitting}
-            required
-          />
-        </div>
-        
-        <div>
-          <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Details</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-100 bg-gray-50/50 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 focus:bg-white transition-all outline-none font-medium resize-none"
-            rows={4}
-            placeholder="Provide context or explain the problem..."
+            placeholder={t('feedbackForm.subjectPlaceholder')}
             disabled={isSubmitting}
             required
           />
         </div>
 
         <div>
-          <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Visual Context</label>
+          <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
+            {t('feedbackForm.detailsLabel')}
+          </label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-100 bg-gray-50/50 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 focus:bg-white transition-all outline-none font-medium resize-none"
+            rows={4}
+            placeholder={t('feedbackForm.detailsPlaceholder')}
+            disabled={isSubmitting}
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
+            {t('feedbackForm.visualContextLabel')}
+          </label>
           <div className="mt-2">
             {screenshots.length === 0 ? (
               <button
@@ -227,19 +232,19 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
                 disabled={isSubmitting}
               >
                 <i className="fa-solid fa-camera text-2xl group-hover:scale-110 transition-transform"></i>
-                <span className="text-sm font-bold">Attach Screenshot</span>
-                <span className="text-xs font-medium opacity-60">Add images to help illustrate your feedback</span>
+                <span className="text-sm font-bold">{t('feedbackForm.attachScreenshot')}</span>
+                <span className="text-xs font-medium opacity-60">{t('feedbackForm.attachDescription')}</span>
               </button>
             ) : (
               <div className="w-full">
                 <div className="grid grid-cols-3 gap-2 mb-3">
                   {screenshots.map((screenshot, index) => (
-                    <div 
+                    <div
                       key={index}
                       className="relative group rounded-xl overflow-hidden aspect-video bg-gray-100"
                     >
-                      <img 
-                        src={screenshot} 
+                      <img
+                        src={screenshot}
                         alt={`Screenshot ${index + 1}`}
                         className="w-full h-full object-cover"
                       />
@@ -261,7 +266,7 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
                       disabled={isSubmitting}
                     >
                       <i className="fa-solid fa-plus text-lg group-hover:scale-110 transition-transform"></i>
-                      <span className="text-xs font-bold">Add</span>
+                      <span className="text-xs font-bold">{t('feedbackForm.addMore')}</span>
                     </button>
                   )}
                 </div>
@@ -273,7 +278,7 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
                     disabled={isSubmitting}
                   >
                     <i className="fa-solid fa-plus"></i>
-                    Add More
+                    {t('feedbackForm.addMore')}
                   </button>
                   <button
                     type="button"
@@ -285,12 +290,12 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
                     disabled={isSubmitting}
                   >
                     <i className="fa-solid fa-trash-can"></i>
-                    Clear All
+                    {t('feedbackForm.clearAll')}
                   </button>
                 </div>
                 {screenshots.length > 0 && (
                   <p className="text-xs text-gray-400 mt-2 font-medium">
-                    {screenshots.length} image{screenshots.length !== 1 ? 's' : ''} attached
+                    {screenshots.length} {screenshots.length !== 1 ? t('feedbackForm.imagesAttached') : t('feedbackForm.imageAttached')}
                   </p>
                 )}
               </div>
@@ -316,7 +321,7 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
                   <i className={`fa-solid ${ANALYSIS_STEPS[currentStep].icon} text-indigo-600 animate-pulse`}></i>
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-indigo-900">AI Analysis in Progress</h4>
+                  <h4 className="text-sm font-bold text-indigo-900">{t('aiAnalysis.inProgress')}</h4>
                   <p className="text-xs text-indigo-600 font-medium">{ANALYSIS_STEPS[currentStep].label}</p>
                 </div>
               </div>
@@ -367,7 +372,7 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
             <div className="space-y-3 pt-2">
               <div className="flex items-center gap-2 text-xs text-indigo-600 font-bold uppercase tracking-wider">
                 <i className="fa-solid fa-robot"></i>
-                Preparing AI Summary...
+                {t('aiAnalysis.preparingSummary')}
               </div>
               <div className="space-y-2">
                 <div className="h-3 bg-indigo-200/60 rounded-full animate-pulse" style={{ width: '90%' }} />
@@ -383,7 +388,7 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
           <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg animate-in fade-in duration-300">
             <div className="flex items-center gap-2 text-green-700 text-xs font-black uppercase tracking-wider mb-2">
               <i className="fa-solid fa-check-circle"></i>
-              AI Summary Complete
+              {t('aiAnalysis.summaryComplete')}
             </div>
             <p className="text-sm text-green-900/70 font-medium">{aiSummary}</p>
           </div>
@@ -395,8 +400,8 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
             onClick={isAnalyzed ? handleSubmit : handleAIPostFeedback}
             disabled={isAnalyzing || isSubmitting || !title || !description || screenshots.length === 0}
             className={`flex-1 py-4 px-6 rounded-xl font-black transition-all flex items-center justify-center gap-3 tracking-widest uppercase text-sm ${
-              isAnalyzing 
-                ? 'bg-indigo-300 cursor-wait text-white' 
+              isAnalyzing
+                ? 'bg-indigo-300 cursor-wait text-white'
                 : !title || !description || screenshots.length === 0
                   ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   : isAnalyzed
@@ -407,27 +412,27 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
             {isAnalyzing ? (
               <>
                 <i className="fa-solid fa-wand-magic-sparkles animate-pulse"></i>
-                Analyzing...
+                {t('feedbackForm.analyzing')}
               </>
             ) : isAnalyzed ? (
               <>
                 <i className="fa-solid fa-check"></i>
-                AI Post Feedback
+                {t('feedbackForm.aiPostFeedback')}
               </>
             ) : (
               <>
                 <i className="fa-solid fa-robot"></i>
-                AI Post Feedback
+                {t('feedbackForm.aiPostFeedback')}
               </>
             )}
           </button>
         </div>
         <p className="text-[9px] text-center text-gray-400 font-bold uppercase tracking-wider">
-          {isAnalyzed 
-            ? 'Analysis complete - Ready to submit'
-            : screenshots.length > 0 
-              ? 'AI will analyze and summarize your feedback' 
-              : 'Attach screenshots to enable AI analysis'}
+          {isAnalyzed
+            ? t('feedbackForm.analysisComplete')
+            : screenshots.length > 0
+              ? t('feedbackForm.aiWillAnalyze')
+              : t('feedbackForm.attachScreenshotsToEnable')}
         </p>
       </form>
     </div>

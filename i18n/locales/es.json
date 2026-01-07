@@ -1,0 +1,130 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "close": "Cerrar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "all": "Todos",
+    "yes": "Sí",
+    "no": "No",
+    "confirm": "Confirmar",
+    "retry": "Reintentar"
+  },
+  "nav": {
+    "adminPanel": "Panel de Admin",
+    "online": "En línea",
+    "searchPlaceholder": "Buscar comentarios...",
+    "settings": "Configuración"
+  },
+  "sidebar": {
+    "filterByCategory": "Filtrar por Categoría",
+    "allFeedback": "Todos los Comentarios",
+    "multimodalAI": "IA Multimodal",
+    "multimodalDescription": "Sube capturas de pantalla para que Gemini identifique errores y patrones de UI al instante.",
+    "aiRoadmapVision": "Visión IA del Roadmap"
+  },
+  "categories": {
+    "all": "Todos",
+    "general": "General",
+    "feature": "Funcionalidad",
+    "bug": "Error",
+    "uiux": "UI/UX",
+    "performance": "Rendimiento",
+    "security": "Seguridad",
+    "documentation": "Documentación"
+  },
+  "status": {
+    "open": "Abierto",
+    "planned": "Planificado",
+    "inProgress": "En Progreso",
+    "completed": "Completado",
+    "closed": "Cerrado"
+  },
+  "sentiment": {
+    "positive": "Positivo",
+    "neutral": "Neutral",
+    "negative": "Negativo"
+  },
+  "priority": {
+    "critical": "Crítico",
+    "high": "Alto",
+    "medium": "Medio",
+    "low": "Bajo"
+  },
+  "feedbackForm": {
+    "title": "Enviar Nuevo Comentario",
+    "subjectLabel": "Asunto",
+    "subjectPlaceholder": "¿Qué deberíamos mejorar?",
+    "detailsLabel": "Detalles",
+    "detailsPlaceholder": "Proporciona contexto o explica el problema...",
+    "visualContextLabel": "Contexto Visual",
+    "attachScreenshot": "Adjuntar Captura",
+    "attachDescription": "Agrega imágenes para ilustrar tu comentario",
+    "addMore": "Agregar Más",
+    "clearAll": "Borrar Todo",
+    "imagesAttached": "imágenes adjuntas",
+    "imageAttached": "imagen adjunta",
+    "aiPostFeedback": "Publicar con IA",
+    "analyzing": "Analizando...",
+    "analysisComplete": "Análisis completo - Listo para enviar",
+    "attachScreenshotsToEnable": "Adjunta capturas para habilitar el análisis IA",
+    "aiWillAnalyze": "La IA analizará y resumirá tu comentario"
+  },
+  "aiAnalysis": {
+    "inProgress": "Análisis IA en Progreso",
+    "initializing": "Inicializando IA...",
+    "analyzingText": "Analizando contenido de texto...",
+    "processingImages": "Procesando imágenes...",
+    "generatingInsights": "Generando perspectivas...",
+    "finalizing": "Finalizando análisis...",
+    "preparingSummary": "Preparando Resumen IA...",
+    "summaryComplete": "Resumen IA Completado",
+    "aiInsight": "Perspectiva IA",
+    "aiAnalyze": "Analizar con IA",
+    "analysisEnhanced": "Se han mejorado el título, descripción, categoría y sentimiento"
+  },
+  "feedbackList": {
+    "latestFeedback": "Últimos Comentarios",
+    "showingCount": "Mostrando {count} sugerencias de la comunidad",
+    "nothingYet": "Nada aquí todavía",
+    "beFirst": "¡Sé el primero en sugerir una mejora!",
+    "votes": "votos"
+  },
+  "feedbackModal": {
+    "feedbackDetails": "Detalles del Comentario",
+    "id": "ID",
+    "created": "Creado",
+    "confirmDelete": "¿Estás seguro de que quieres eliminar este comentario? Esta acción no se puede deshacer."
+  },
+  "roadmap": {
+    "aiStrategyRoadmap": "Roadmap Estratégico IA",
+    "generatingRoadmap": "Generando roadmap...",
+    "roadmapFailed": "Error al generar el roadmap"
+  },
+  "errors": {
+    "loadFailed": "Error al cargar comentarios. Por favor, inténtalo más tarde.",
+    "submitFailed": "Error al enviar comentario. Por favor, inténtalo de nuevo.",
+    "voteFailed": "Error al registrar voto. Por favor, inténtalo de nuevo.",
+    "updateFailed": "Error al actualizar comentario. Por favor, inténtalo de nuevo.",
+    "deleteFailed": "Error al eliminar comentario. Por favor, inténtalo de nuevo.",
+    "analysisFailed": "El análisis IA falló. Por favor, inténtalo de nuevo.",
+    "roadmapFailed": "Error al generar el roadmap. Por favor, inténtalo de nuevo.",
+    "tryAgain": "Por favor, inténtalo de nuevo"
+  },
+  "datetime": {
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "daysAgo": "Hace {count} días",
+    "weeksAgo": "Hace {count} semanas",
+    "monthsAgo": "Hace {count} meses",
+    "justNow": "Ahora mismo",
+    "minutesAgo": "Hace {count} minutos",
+    "hoursAgo": "Hace {count} horas"
+  }
+}

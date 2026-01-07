@@ -1,6 +1,6 @@
-
 import React from 'react';
 import { FeedbackItem } from '../types';
+import { useI18n } from '../i18n';
 
 interface Props {
   feedback: FeedbackItem;
@@ -9,15 +9,29 @@ interface Props {
   onClick: (feedback: FeedbackItem) => void;
 }
 
-const statusColors: Record<string, string> = {
-  'open': 'bg-gray-100 text-gray-600',
-  'planned': 'bg-blue-100 text-blue-600',
-  'in-progress': 'bg-yellow-100 text-yellow-600',
-  'completed': 'bg-green-100 text-green-600',
-  'closed': 'bg-red-100 text-red-600',
-};
-
 export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote, onClick }) => {
+  const { t, formatRelativeTime } = useI18n();
+
+  // Translate status
+  const getStatusLabel = (status: string): string => {
+    const statusMap: Record<string, string> = {
+      'open': t('status.open'),
+      'planned': t('status.planned'),
+      'in-progress': t('status.inProgress'),
+      'completed': t('status.completed'),
+      'closed': t('status.closed')
+    };
+    return statusMap[status] || status;
+  };
+
+  const statusColors: Record<string, string> = {
+    'open': 'bg-gray-100 text-gray-600',
+    'planned': 'bg-blue-100 text-blue-600',
+    'in-progress': 'bg-yellow-100 text-yellow-600',
+    'completed': 'bg-green-100 text-green-600',
+    'closed': 'bg-red-100 text-red-600',
+  };
+
   // Support both legacy single screenshot and new screenshots array
   const screenshots = feedback.screenshots || (feedback.screenshot ? [feedback.screenshot] : []);
   const hasScreenshots = screenshots.length > 0;
@@ -47,7 +61,7 @@ export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote, onCl
           <p style="color:#666;text-align:center;margin-top:8px;font-size:12px;">Image ${i + 1} of ${feedback.screenshots?.length}</p>
         </div>
       `).join('') || '';
-      
+
       w.document.write(`
         <html>
           <head>
@@ -101,18 +115,18 @@ export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote, onCl
       <div className="flex-1 min-w-0 overflow-hidden">
         <div className="flex items-center flex-wrap gap-2 mb-2">
           <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${statusColors[feedback.status]}`}>
-            {feedback.status}
+            {getStatusLabel(feedback.status)}
           </span>
           <span className="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase tracking-widest">
             {feedback.category}
           </span>
           {feedback.sentiment && (
-            <span title={`Sentiment: ${feedback.sentiment}`} className="text-sm">
+            <span title={`${t('sentiment.' + feedback.sentiment)}`} className="text-sm">
               {feedback.sentiment === 'positive' ? '😊' : feedback.sentiment === 'negative' ? '😟' : '😐'}
             </span>
           )}
         </div>
-        
+
         <div className="flex flex-col md:flex-row justify-between gap-4 overflow-hidden">
           <div className="flex-1 min-w-0">
             <h3 className="text-lg font-bold text-gray-800 leading-tight mb-2 truncate group-hover:text-indigo-600 transition-colors">
@@ -120,7 +134,7 @@ export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote, onCl
             </h3>
             <p className="text-gray-600 text-sm line-clamp-2 mb-3 leading-relaxed">{feedback.description}</p>
           </div>
-          
+
           {hasScreenshots && (
             <div className="flex-shrink-0 overflow-visible pb-2" onClick={(e) => e.stopPropagation()}>
               <div
@@ -132,8 +146,8 @@ export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote, onCl
                   <div className={`grid ${getMosaicClass()} gap-0.5 w-24 h-20 overflow-hidden rounded-lg ring-1 ring-gray-200 group-hover/thumb:ring-indigo-400 transition-all cursor-pointer`}>
                     {feedback.screenshots.slice(0, 4).map((screenshot, index) => (
                       <div key={index} className="relative overflow-hidden">
-                        <img 
-                          src={screenshot} 
+                        <img
+                          src={screenshot}
                           alt={`Screenshot ${index + 1}`}
                           className="w-full h-full object-cover"
                         />
@@ -147,9 +161,9 @@ export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote, onCl
                   </div>
                 ) : (
                   // Single screenshot display (legacy support)
-                  <img 
-                    src={screenshots[0]} 
-                    alt="Visual Context" 
+                  <img
+                    src={screenshots[0]}
+                    alt="Visual Context"
                     className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg ring-1 ring-gray-200 group-hover/thumb:ring-indigo-400 transition-all"
                   />
                 )}
@@ -165,12 +179,12 @@ export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote, onCl
             </div>
           )}
         </div>
-        
+
         {feedback.aiInsight && (
           <div className="bg-indigo-50/50 border-l-4 border-indigo-500 p-3 rounded-r-lg mb-3 mt-2">
              <div className="flex items-center gap-2 text-indigo-700 text-[10px] font-black uppercase tracking-wider mb-1">
                <i className="fa-solid fa-wand-magic-sparkles"></i>
-               AI Insight
+               {t('aiAnalysis.aiInsight')}
              </div>
              <p className="text-xs text-indigo-900/70 italic font-medium">{feedback.aiInsight}</p>
           </div>
@@ -179,7 +193,7 @@ export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote, onCl
         <div className="flex items-center text-[10px] text-gray-400 font-bold uppercase tracking-wider">
           <span className="flex items-center gap-1">
             <i className="fa-regular fa-clock"></i>
-            {new Date(feedback.createdAt).toLocaleDateString()}
+            {formatRelativeTime(feedback.createdAt)}
           </span>
         </div>
       </div>
