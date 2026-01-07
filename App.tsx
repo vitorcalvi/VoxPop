@@ -24,6 +24,10 @@ const AppContent: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selectedFeedback, setSelectedFeedback] = useState<FeedbackItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userRole, setUserRole] = useState<'user' | 'admin'>(() => {
+    const role = localStorage.getItem('voxpop_user_role') as 'user' | 'admin';
+    return role || 'user';
+  });
 
   // Generate a simple user ID for this browser session
   const userId = useMemo(() => {
@@ -34,6 +38,13 @@ const AppContent: React.FC = () => {
     }
     return id;
   }, []);
+
+  // Toggle user role for demo purposes
+  const toggleUserRole = () => {
+    const newRole = userRole === 'user' ? 'admin' : 'user';
+    setUserRole(newRole);
+    localStorage.setItem('voxpop_user_role', newRole);
+  };
 
   // Fetch feedbacks on mount and when filter/search changes
   useEffect(() => {
@@ -283,14 +294,13 @@ const AppContent: React.FC = () => {
           <div className="flex items-center gap-4">
              {/* Language Switcher */}
              <LanguageSwitcher variant="dropdown" showLabel={true} />
-
-             <div className="hidden sm:flex flex-col items-end mr-2">
-                <span className="text-xs font-bold text-gray-900">{t('nav.adminPanel')}</span>
-                <span className="text-[9px] font-black text-green-500 uppercase tracking-widest">{t('nav.online')}</span>
-             </div>
-             <div className="w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-colors cursor-pointer" title={t('nav.settings')}>
-                <i className="fa-solid fa-cog"></i>
-             </div>
+             <button
+               onClick={toggleUserRole}
+               className="w-10 h-10 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-600 hover:bg-indigo-200 hover:text-indigo-700 transition-colors cursor-pointer"
+               title={`Current role: ${userRole === 'admin' ? 'Admin' : 'User'} (Click to toggle)`}
+             >
+               <i className={`fa-solid ${userRole === 'admin' ? 'fa-user-shield' : 'fa-user'}`}></i>
+             </button>
           </div>
         </div>
       </nav>
@@ -330,18 +340,30 @@ const AppContent: React.FC = () => {
               />
 
               <div className="mt-8 pt-8 border-t border-gray-100">
-                <button
-                  onClick={handleGenerateRoadmap}
-                  disabled={isGeneratingRoadmap || feedbacks.length === 0}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border border-indigo-100 text-indigo-700 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-50 hover:shadow-xl hover:shadow-indigo-100 transition-all disabled:opacity-50 group"
-                >
-                  {isGeneratingRoadmap ? (
-                    <i className="fa-solid fa-spinner animate-spin"></i>
-                  ) : (
-                    <i className="fa-solid fa-compass group-hover:rotate-45 transition-transform"></i>
+                <div className="relative group">
+                  <button
+                    onClick={userRole === 'admin' ? handleGenerateRoadmap : undefined}
+                    disabled={userRole !== 'admin' || isGeneratingRoadmap || feedbacks.length === 0}
+                    className={`w-full flex items-center justify-center gap-3 px-6 py-4 border text-xs font-black uppercase tracking-widest transition-all group ${
+                      userRole === 'admin'
+                        ? 'bg-white border-indigo-100 text-indigo-700 rounded-2xl hover:bg-indigo-50 hover:shadow-xl hover:shadow-indigo-100'
+                        : 'bg-gray-50 border-gray-200 text-gray-400 rounded-xl cursor-not-allowed'
+                    } ${isGeneratingRoadmap ? 'opacity-50 cursor-wait' : ''}`}
+                  >
+                    {isGeneratingRoadmap ? (
+                      <i className="fa-solid fa-spinner animate-spin"></i>
+                    ) : (
+                      <i className={`fa-solid fa-compass ${userRole === 'admin' ? 'group-hover:rotate-45' : ''} transition-transform`}></i>
+                    )}
+                    {t('sidebar.aiRoadmapVision')}
+                  </button>
+                  {userRole !== 'admin' && (
+                    <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 px-3 py-2 bg-gray-900 text-white text-xs font-bold rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                      Access Restricted: Administrator privileges required.
+                      <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                    </div>
                   )}
-                  {t('sidebar.aiRoadmapVision')}
-                </button>
+                </div>
               </div>
             </aside>
 

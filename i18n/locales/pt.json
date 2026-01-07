@@ -27,6 +27,7 @@
     "allFeedback": "Todos os Feedbacks",
     "multimodalAI": "IA Multimodal",
     "multimodalDescription": "Envie capturas de tela para o Gemini identificar bugs e padrões de UI instantaneamente.",
+    "multimodalAIDescription": "Compartilhe feedback usando palavras, imagens ou áudio—o que funciona melhor para você. Nossa IA entende diferentes formatos juntos para dar insights úteis.",
     "aiRoadmapVision": "Visão IA do Roadmap"
   },
   "categories": {
@@ -66,10 +67,12 @@
     "visualContextLabel": "Contexto Visual",
     "attachScreenshot": "Anexar Captura",
     "attachDescription": "Adicione imagens para ilustrar seu feedback",
+    "releaseToUpload": "Solte para enviar",
     "addMore": "Adicionar Mais",
     "clearAll": "Limpar Tudo",
     "imagesAttached": "imagens anexadas",
     "imageAttached": "imagem anexada",
+    "imageCounter": "{count}/20 imagens",
     "aiPostFeedback": "Publicar com IA",
     "analyzing": "Analisando...",
     "analysisComplete": "Análise completa - Pronto para enviar",
@@ -116,6 +119,11 @@
     "analysisFailed": "A análise IA falhou. Por favor, tente novamente.",
     "roadmapFailed": "Falha ao gerar o roadmap. Por favor, tente novamente.",
     "payloadTooLarge": "As imagens são muito grandes. Por favor, use menos ou menores (máximo 4MB total).",
+    "invalidFileType": "Tipo de arquivo inválido. Por favor, faça upload apenas de imagens.",
+    "imageProcessingFailed": "Falha ao processar imagem. Por favor, tente novamente.",
+    "maxImagesExceeded": "Máximo de 20 imagens permitidas. Por favor, remova algumas imagens primeiro.",
+    "fileTooLarge": "Arquivo muito grande. Tamanho máximo é 5MB por arquivo.",
+    "invalidFileTypeDetailed": "Tipo de arquivo inválido. Apenas JPG, PNG, GIF e WebP são suportados.",
     "tryAgain": "Por favor, tente novamente"
   },
   "datetime": {

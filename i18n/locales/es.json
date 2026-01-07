@@ -27,6 +27,7 @@
     "allFeedback": "Todos los Comentarios",
     "multimodalAI": "IA Multimodal",
     "multimodalDescription": "Sube capturas de pantalla para que Gemini identifique errores y patrones de UI al instante.",
+    "multimodalAIDescription": "Comparte comentarios usando palabras, imágenes o audio—lo que mejor funcione para ti. Nuestra IA entiende diferentes formatos juntos para darte perspectivas útiles.",
     "aiRoadmapVision": "Visión IA del Roadmap"
   },
   "categories": {
@@ -66,10 +67,12 @@
     "visualContextLabel": "Contexto Visual",
     "attachScreenshot": "Adjuntar Captura",
     "attachDescription": "Agrega imágenes para ilustrar tu comentario",
+    "releaseToUpload": "Suelta para subir",
     "addMore": "Agregar Más",
     "clearAll": "Borrar Todo",
     "imagesAttached": "imágenes adjuntas",
     "imageAttached": "imagen adjunta",
+    "imageCounter": "{count}/20 imágenes",
     "aiPostFeedback": "Publicar con IA",
     "analyzing": "Analizando...",
     "analysisComplete": "Análisis completo - Listo para enviar",
@@ -116,6 +119,11 @@
     "analysisFailed": "El análisis IA falló. Por favor, inténtalo de nuevo.",
     "roadmapFailed": "Error al generar el roadmap. Por favor, inténtalo de nuevo.",
     "payloadTooLarge": "Las imágenes son demasiado grandes. Por favor, usa menos o más pequeñas (máximo 4MB total).",
+    "invalidFileType": "Tipo de archivo inválido. Por favor, sube solo imágenes.",
+    "imageProcessingFailed": "Error al procesar la imagen. Por favor, inténtalo de nuevo.",
+    "maxImagesExceeded": "Máximo de 20 imágenes permitidas. Por favor, elimina algunas imágenes primero.",
+    "fileTooLarge": "Archivo muy grande. El tamaño máximo es 5MB por archivo.",
+    "invalidFileTypeDetailed": "Tipo de archivo inválido. Solo se admiten JPG, PNG, GIF y WebP.",
     "tryAgain": "Por favor, inténtalo de nuevo"
   },
   "datetime": {

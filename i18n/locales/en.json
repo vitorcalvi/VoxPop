@@ -27,6 +27,7 @@
     "allFeedback": "All Feedback",
     "multimodalAI": "Multimodal AI",
     "multimodalDescription": "Upload screenshots to help Gemini identify bugs and UI patterns instantly.",
+    "multimodalAIDescription": "Share feedback using words, images, or audio—whatever works best for you. Our AI understands different formats together to give you helpful insights.",
     "aiRoadmapVision": "AI Roadmap Vision"
   },
   "categories": {
@@ -66,10 +67,12 @@
     "visualContextLabel": "Visual Context",
     "attachScreenshot": "Attach Screenshot",
     "attachDescription": "Add images to help illustrate your feedback",
+    "releaseToUpload": "Release to upload",
     "addMore": "Add More",
     "clearAll": "Clear All",
     "imagesAttached": "images attached",
     "imageAttached": "image attached",
+    "imageCounter": "{count}/20 images",
     "aiPostFeedback": "AI Post Feedback",
     "analyzing": "Analyzing...",
     "analysisComplete": "Analysis complete - Ready to submit",
@@ -116,6 +119,11 @@
     "analysisFailed": "AI analysis failed. Please try again.",
     "roadmapFailed": "Failed to generate roadmap. Please try again.",
     "payloadTooLarge": "Images are too large. Please use fewer or smaller images (max 4MB total).",
+    "invalidFileType": "Invalid file type. Please upload images only.",
+    "imageProcessingFailed": "Failed to process image. Please try again.",
+    "maxImagesExceeded": "Maximum of 20 images allowed. Please remove some images first.",
+    "fileTooLarge": "File too large. Maximum size is 5MB per file.",
+    "invalidFileTypeDetailed": "Invalid file type. Only JPG, PNG, GIF, and WebP are supported.",
     "tryAgain": "Please try again"
   },
   "datetime": {

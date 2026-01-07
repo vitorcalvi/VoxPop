@@ -21,6 +21,15 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
   const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragHover, setDragHover] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
+
+  // Constants for validation
+  const MAX_IMAGES = 20;
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+  const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
   // Analysis steps for progress tracking
   const ANALYSIS_STEPS = [
@@ -117,21 +126,55 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
 
+    // Check total image count limit
+    if (screenshots.length + files.length > MAX_IMAGES) {
+      setUploadError(t('errors.maxImagesExceeded') || `Maximum of ${MAX_IMAGES} images allowed. Please remove some images first.`);
+      setTimeout(() => setUploadError(null), 5000);
+      return;
+    }
+
+    // Set loading state
+    setUploadingFiles(new Set(files.map(f => f.name)));
+
     for (const file of files) {
-      if (file.type.startsWith('image/')) {
-        try {
-          // Compress image before storing (reduces ~80% size typically)
-          const compressedImage = await compressImage(file);
-          setScreenshots((prev) => [...prev, compressedImage]);
-        } catch (error) {
-          console.error('Image compression failed:', error);
-          // Fallback to original if compression fails
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setScreenshots((prev) => [...prev, reader.result as string]);
-          };
-          reader.readAsDataURL(file);
-        }
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        setUploadError(t('errors.fileTooLarge') || `File too large. Maximum size is 5MB per file.`);
+        setTimeout(() => setUploadError(null), 5000);
+        setUploadingFiles(new Set());
+        return;
+      }
+
+      // Validate file type
+      if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        setUploadError(t('errors.invalidFileTypeDetailed') || 'Invalid file type. Only JPG, PNG, GIF, and WebP are supported.');
+        setTimeout(() => setUploadError(null), 5000);
+        setUploadingFiles(new Set());
+        return;
+      }
+
+      try {
+        // Compress image before storing (reduces ~80% size typically)
+        const compressedImage = await compressImage(file);
+        setScreenshots((prev) => [...prev, compressedImage]);
+        setUploadingFiles(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(file.name);
+          return newSet;
+        });
+      } catch (error) {
+        console.error('Image compression failed:', error);
+        // Fallback to original if compression fails
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setScreenshots((prev) => [...prev, reader.result as string]);
+          setUploadingFiles(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(file.name);
+            return newSet;
+          });
+        };
+        reader.readAsDataURL(file);
       }
     }
 
@@ -140,6 +183,78 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
 
   const removeScreenshot = (indexToRemove: number) => {
     setScreenshots((prev) => prev.filter((_, index) => index !== indexToRemove));
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragHover(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragHover(false);
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragHover(false);
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files);
+
+    // Check total image count limit
+    if (screenshots.length + files.length > MAX_IMAGES) {
+      setUploadError(t('errors.maxImagesExceeded') || `Maximum of ${MAX_IMAGES} images allowed. Please remove some images first.`);
+      setTimeout(() => setUploadError(null), 5000);
+      return;
+    }
+
+    // Set loading state
+    setUploadingFiles(new Set(files.map(f => f.name)));
+
+    for (const file of files) {
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        setUploadError(t('errors.fileTooLarge') || `File too large. Maximum size is 5MB per file.`);
+        setTimeout(() => setUploadError(null), 5000);
+        setUploadingFiles(new Set());
+        return;
+      }
+
+      // Validate file type
+      if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        setUploadError(t('errors.invalidFileTypeDetailed') || 'Invalid file type. Only JPG, PNG, GIF, and WebP are supported.');
+        setTimeout(() => setUploadError(null), 5000);
+        setUploadingFiles(new Set());
+        return;
+      }
+
+      try {
+        const compressedImage = await compressImage(file);
+        setScreenshots((prev) => [...prev, compressedImage]);
+        setUploadError(null);
+        setUploadingFiles(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(file.name);
+          return newSet;
+        });
+      } catch (error) {
+        console.error('Image compression failed:', error);
+        setUploadError(t('errors.imageProcessingFailed') || 'Failed to process image. Please try again.');
+        setTimeout(() => setUploadError(null), 5000);
+        setUploadingFiles(new Set());
+      }
+    }
   };
 
   // Calculate payload size in bytes
@@ -293,19 +408,44 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
           </label>
           <div className="mt-2">
             {screenshots.length === 0 ? (
-              <button
-                type="button"
+              <div
+                role="button"
+                tabIndex={0}
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full py-4 border-2 border-dashed border-gray-200 rounded-xl text-gray-400 hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50/50 transition-all flex flex-col items-center justify-center gap-2 group"
-                disabled={isSubmitting}
+                onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current?.click()}
+                onDragEnter={handleDragEnter}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                aria-label={t('feedbackForm.attachScreenshot')}
+                className={`w-full py-4 border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-2 group transition-all ${
+                  dragHover
+                    ? 'border-indigo-500 bg-indigo-50 text-indigo-600'
+                    : 'border-gray-200 text-gray-400 hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50/50'
+                } ${isSubmitting || uploadingFiles.size > 0 ? 'opacity-50 cursor-wait' : ''}`}
               >
-                <i className="fa-solid fa-camera text-2xl group-hover:scale-110 transition-transform"></i>
-                <span className="text-sm font-bold">{t('feedbackForm.attachScreenshot')}</span>
-                <span className="text-xs font-medium opacity-60">{t('feedbackForm.attachDescription')}</span>
-              </button>
+                {uploadingFiles.size > 0 ? (
+                  <>
+                    <i className="fa-solid fa-spinner fa-spin text-2xl text-indigo-500"></i>
+                    <span className="text-sm font-bold text-indigo-600">
+                      Processing {uploadingFiles.size} file{uploadingFiles.size !== 1 ? 's' : ''}...
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fa-solid fa-cloud-upload text-2xl group-hover:scale-110 transition-transform"></i>
+                    <span className="text-sm font-bold">
+                      {dragHover
+                        ? t('feedbackForm.releaseToUpload') || 'Release to upload'
+                        : t('feedbackForm.attachScreenshot')}
+                    </span>
+                    <span className="text-xs font-medium opacity-60">{t('feedbackForm.attachDescription')}</span>
+                  </>
+                )}
+              </div>
             ) : (
               <div className="w-full">
-                <div className="grid grid-cols-3 gap-2 mb-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mb-3">
                   {screenshots.map((screenshot, index) => (
                     <div
                       key={index}
@@ -326,24 +466,13 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
                       </button>
                     </div>
                   ))}
-                  {screenshots.length < 4 && (
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="aspect-video rounded-xl border-2 border-dashed border-indigo-300 text-indigo-500 hover:border-indigo-500 hover:bg-indigo-50 transition-all flex flex-col items-center justify-center gap-1 group"
-                      disabled={isSubmitting}
-                    >
-                      <i className="fa-solid fa-plus text-lg group-hover:scale-110 transition-transform"></i>
-                      <span className="text-xs font-bold">{t('feedbackForm.addMore')}</span>
-                    </button>
-                  )}
                 </div>
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className="px-4 py-2 border-2 border-dashed border-indigo-300 rounded-xl text-indigo-500 hover:border-indigo-500 hover:bg-indigo-50 transition-all flex items-center gap-2 text-sm font-bold"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || uploadingFiles.size > 0 || screenshots.length >= MAX_IMAGES}
                   >
                     <i className="fa-solid fa-plus"></i>
                     {t('feedbackForm.addMore')}
@@ -363,7 +492,7 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
                 </div>
                 {screenshots.length > 0 && (
                   <p className="text-xs text-gray-400 mt-2 font-medium">
-                    {screenshots.length} {screenshots.length !== 1 ? t('feedbackForm.imagesAttached') : t('feedbackForm.imageAttached')}
+                    {t('feedbackForm.imageCounter', { count: screenshots.length })}
                   </p>
                 )}
               </div>
@@ -376,6 +505,12 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
               multiple
               className="hidden"
             />
+            {uploadError && (
+              <div role="alert" className="mt-2 text-xs text-red-500 font-medium animate-in fade-in duration-300">
+                <i className="fa-solid fa-exclamation-circle mr-1"></i>
+                {uploadError}
+              </div>
+            )}
           </div>
         </div>
 
@@ -466,9 +601,9 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
           <button
             type="button"
             onClick={isAnalyzed ? handleSubmit : handleAIPostFeedback}
-            disabled={isAnalyzing || isSubmitting || !title || !description || screenshots.length === 0}
+            disabled={isAnalyzing || isSubmitting || uploadingFiles.size > 0 || !title || !description || screenshots.length === 0}
             className={`flex-1 py-4 px-6 rounded-xl font-black transition-all flex items-center justify-center gap-3 tracking-widest uppercase text-sm ${
-              isAnalyzing
+              isAnalyzing || uploadingFiles.size > 0
                 ? 'bg-indigo-300 cursor-wait text-white'
                 : !title || !description || screenshots.length === 0
                   ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
