@@ -54,7 +54,13 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState(15);
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const timeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Cleanup progress interval on unmount
   useEffect(() => {
@@ -62,16 +68,51 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
       }
+      if (timeIntervalRef.current) {
+        clearInterval(timeIntervalRef.current);
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
     };
   }, []);
 
-  // Start progress simulation
+  // Play completion sound if enabled
+  useEffect(() => {
+    if (showSuccessAnimation && soundEnabled) {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    }
+  }, [showSuccessAnimation, soundEnabled]);
+
+  // Start progress simulation with immediate UI update
   const startProgressSimulation = () => {
     setCurrentStep(0);
     setProgress(0);
+    setEstimatedTimeRemaining(15);
+    setAnalysisError(null);
 
     let step = 0;
     let prog = 0;
+    let timeRemaining = 15;
+
+    // Start timer for estimated time
+    timeIntervalRef.current = setInterval(() => {
+      timeRemaining = Math.max(0, timeRemaining - 1);
+      setEstimatedTimeRemaining(timeRemaining);
+    }, 1000);
 
     progressIntervalRef.current = setInterval(() => {
       prog += Math.random() * 3 + 1;
@@ -95,8 +136,23 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
       clearInterval(progressIntervalRef.current);
       progressIntervalRef.current = null;
     }
+    if (timeIntervalRef.current) {
+      clearInterval(timeIntervalRef.current);
+      timeIntervalRef.current = null;
+    }
     setProgress(100);
     setCurrentStep(ANALYSIS_STEPS.length - 1);
+    setEstimatedTimeRemaining(0);
+  };
+
+  // Cancel analysis
+  const cancelAnalysis = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    stopProgressSimulation();
+    setIsAnalyzing(false);
+    setAnalysisError(t('errors.analysisCancelled') || 'Analysis cancelled');
   };
 
   useEffect(() => {
@@ -149,9 +205,20 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
   const handleAIAnalyze = async () => {
     if (!editedFeedback || isAnalyzing) return;
 
+    // Create abort controller for cancellation
+    abortControllerRef.current = new AbortController();
+
+    // Set loading state immediately
     setIsAnalyzing(true);
     setAiSummary(null);
+    setShowSuccessAnimation(false);
+    setAnalysisError(null);
     startProgressSimulation();
+
+    // Use requestAnimationFrame to ensure UI paints before fetch starts
+    await new Promise(resolve => requestAnimationFrame(() => {
+      setTimeout(resolve, 0);
+    }));
 
     try {
       const screenshots = editedFeedback.screenshots || (editedFeedback.screenshot ? [editedFeedback.screenshot] : []);
@@ -163,7 +230,8 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
           subject: editedFeedback.title,
           details: editedFeedback.description,
           images: screenshots
-        })
+        }),
+        signal: abortControllerRef.current?.signal
       });
 
       if (!response.ok) {
@@ -173,6 +241,8 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
       const data = await response.json();
       stopProgressSimulation();
       setAiSummary(data.summary);
+      setShowSuccessAnimation(true);
+      setTimeout(() => setShowSuccessAnimation(false), 2000);
 
       // Update feedback with AI-enhanced data
       setEditedFeedback({
@@ -188,9 +258,16 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
       stopProgressSimulation();
       setProgress(0);
       setCurrentStep(0);
-      alert(t('errors.analysisFailed'));
+      setEstimatedTimeRemaining(15);
+      
+      if ((error as any)?.name === 'AbortError') {
+        setAnalysisError(t('errors.analysisCancelled') || 'Analysis cancelled');
+      } else {
+        setAnalysisError(t('errors.analysisFailed') || 'AI analysis failed. Please try again.');
+      }
     } finally {
       setIsAnalyzing(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -443,10 +520,31 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
               </div>
             )}
 
+            {/* Analysis Error */}
+            {analysisError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 animate-in fade-in duration-300">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <i className="fa-solid fa-exclamation-triangle text-red-600"></i>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-bold text-red-900 mb-1">Analysis Error</h4>
+                    <p className="text-xs text-red-700 font-medium mb-3">{analysisError}</p>
+                    <button
+                      onClick={() => setAnalysisError(null)}
+                      className="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-xs font-bold hover:bg-red-200 transition-colors"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* AI Analysis Progress */}
             {isAnalyzing && (
               <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-5 space-y-4 animate-in fade-in duration-300">
-                {/* Progress Header */}
+                {/* Progress Header with Cancel Button */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
@@ -457,7 +555,23 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
                       <p className="text-xs text-indigo-600 font-medium">{ANALYSIS_STEPS[currentStep].label}</p>
                     </div>
                   </div>
-                  <span className="text-lg font-black text-indigo-600">{Math.round(progress)}%</span>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <span className="text-lg font-black text-indigo-600">{Math.round(progress)}%</span>
+                      <div className="text-[10px] text-indigo-500 font-bold">
+                        ~{estimatedTimeRemaining}s remaining
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={cancelAnalysis}
+                      className="px-3 py-2 bg-white border border-red-200 text-red-600 rounded-lg text-xs font-bold hover:bg-red-50 transition-colors flex items-center gap-2"
+                      title="Cancel analysis"
+                    >
+                      <i className="fa-solid fa-xmark"></i>
+                      <span className="hidden sm:inline">Cancel</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Progress Bar */}
@@ -515,12 +629,26 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
               </div>
             )}
 
-            {/* AI Summary (from current analysis) */}
+            {/* AI Summary (from current analysis) with Success Animation */}
             {aiSummary && !isAnalyzing && (
-              <div className="bg-green-50 border-l-4 border-green-500 p-5 rounded-r-xl animate-in fade-in duration-300">
-                <div className="flex items-center gap-2 text-green-700 text-xs font-black uppercase tracking-wider mb-2">
-                  <i className="fa-solid fa-check-circle"></i>
-                  {t('aiAnalysis.summaryComplete')}
+              <div className={`bg-green-50 border-l-4 border-green-500 p-5 rounded-r-xl animate-in fade-in duration-300 ${showSuccessAnimation ? 'animate-pulse' : ''}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2 text-green-700 text-xs font-black uppercase tracking-wider">
+                    <i className={`fa-solid ${showSuccessAnimation ? 'fa-sparkles animate-bounce' : 'fa-check-circle'}`}></i>
+                    {t('aiAnalysis.summaryComplete')}
+                    {showSuccessAnimation && <span className="ml-2 text-xs font-bold">Analysis complete!</span>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-2 text-[10px] text-gray-500 font-bold cursor-pointer hover:text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={soundEnabled}
+                        onChange={(e) => setSoundEnabled(e.target.checked)}
+                        className="w-3 h-3 accent-green-600"
+                      />
+                      <i className="fa-solid fa-volume-high"></i>
+                    </label>
+                  </div>
                 </div>
                 <p className="text-green-900/80 font-medium">{aiSummary}</p>
                 <p className="text-xs text-green-600 mt-2 font-medium">

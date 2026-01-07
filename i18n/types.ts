@@ -184,6 +184,7 @@ export interface TranslationKeys {
     updateFailed: string;
     deleteFailed: string;
     analysisFailed: string;
+    analysisCancelled: string;
     roadmapFailed: string;
     tryAgain: string;
   };

@@ -144,21 +144,23 @@ app.post('/api/feedback', async (req, res) => {
   try {
     const { title, description, category, sentiment, aiInsight, screenshot, screenshots, status = 'open' } = req.body;
     const id = Math.random().toString(36).substr(2, 9);
-    
+
     // Handle both legacy single screenshot and new screenshots array
     const screenshotsArray = screenshots || (screenshot ? [screenshot] : []);
-    
+
     const result = await pool.query(
       `INSERT INTO feedback_items (id, title, description, category, sentiment, "aiInsight", screenshot, screenshots, status, votes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 1)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING *`,
-      [id, title, description, category, sentiment, aiInsight, screenshot || null, JSON.stringify(screenshotsArray), status]
+      [id, title, description, category, sentiment, aiInsight, screenshot || null, JSON.stringify(screenshotsArray), status, 1]
     );
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Error creating feedback:', error);
-    res.status(500).json({ error: 'Failed to create feedback' });
+    console.error('Request body:', req.body);
+    console.error('Error details:', (error as any).message);
+    res.status(500).json({ error: 'Failed to create feedback', details: (error as any).message });
   }
 });
 

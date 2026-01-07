@@ -117,6 +117,7 @@
     "updateFailed": "Falha ao atualizar feedback. Por favor, tente novamente.",
     "deleteFailed": "Falha ao excluir feedback. Por favor, tente novamente.",
     "analysisFailed": "A análise IA falhou. Por favor, tente novamente.",
+    "analysisCancelled": "Análise cancelada pelo usuário",
     "roadmapFailed": "Falha ao gerar o roadmap. Por favor, tente novamente.",
     "payloadTooLarge": "As imagens são muito grandes. Por favor, use menos ou menores (máximo 4MB total).",
     "invalidFileType": "Tipo de arquivo inválido. Por favor, faça upload apenas de imagens.",

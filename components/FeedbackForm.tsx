@@ -19,12 +19,19 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [progress, setProgress] = useState(0);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState(15);
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragHover, setDragHover] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const timeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Constants for validation
   const MAX_IMAGES = 20;
@@ -46,16 +53,51 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
       }
+      if (timeIntervalRef.current) {
+        clearInterval(timeIntervalRef.current);
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
     };
   }, []);
 
-  // Start progress simulation
+  // Play completion sound if enabled
+  useEffect(() => {
+    if (showSuccessAnimation && soundEnabled) {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    }
+  }, [showSuccessAnimation, soundEnabled]);
+
+  // Start progress simulation with immediate UI update
   const startProgressSimulation = () => {
     setCurrentStep(0);
     setProgress(0);
+    setEstimatedTimeRemaining(15);
+    setAnalysisError(null);
 
     let step = 0;
     let prog = 0;
+    let timeRemaining = 15;
+
+    // Start timer for estimated time
+    timeIntervalRef.current = setInterval(() => {
+      timeRemaining = Math.max(0, timeRemaining - 1);
+      setEstimatedTimeRemaining(timeRemaining);
+    }, 1000);
 
     progressIntervalRef.current = setInterval(() => {
       prog += Math.random() * 3 + 1;
@@ -80,8 +122,23 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
       clearInterval(progressIntervalRef.current);
       progressIntervalRef.current = null;
     }
+    if (timeIntervalRef.current) {
+      clearInterval(timeIntervalRef.current);
+      timeIntervalRef.current = null;
+    }
     setProgress(100);
     setCurrentStep(ANALYSIS_STEPS.length - 1);
+    setEstimatedTimeRemaining(0);
+  };
+
+  // Cancel analysis
+  const cancelAnalysis = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    stopProgressSimulation();
+    setIsAnalyzing(false);
+    setAnalysisError(t('errors.analysisCancelled') || 'Analysis cancelled');
   };
 
   // Compress image to reduce payload size for Vercel's 4.5MB limit
@@ -285,15 +342,27 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
       return;
     }
 
+    // Create abort controller for cancellation
+    abortControllerRef.current = new AbortController();
+
+    // Set loading state immediately
     setIsAnalyzing(true);
     setAiSummary(null);
+    setShowSuccessAnimation(false);
+    setAnalysisError(null);
     startProgressSimulation();
+
+    // Use requestAnimationFrame to ensure UI paints before fetch starts
+    await new Promise(resolve => requestAnimationFrame(() => {
+      setTimeout(resolve, 0);
+    }));
 
     try {
       const response = await fetch(`${getApiBase()}/ai/comprehensive-analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: abortControllerRef.current?.signal
       });
 
       if (!response.ok) {
@@ -304,6 +373,8 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
       stopProgressSimulation();
       setAiSummary(data.summary);
       setIsAnalyzed(true);
+      setShowSuccessAnimation(true);
+      setTimeout(() => setShowSuccessAnimation(false), 2000);
 
       if (data.enhancedSubject) {
         setTitle(data.enhancedSubject);
@@ -316,9 +387,16 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
       stopProgressSimulation();
       setProgress(0);
       setCurrentStep(0);
-      alert(t('errors.analysisFailed'));
+      setEstimatedTimeRemaining(15);
+      
+      if ((error as any)?.name === 'AbortError') {
+        setAnalysisError(t('errors.analysisCancelled') || 'Analysis cancelled');
+      } else {
+        setAnalysisError(t('errors.analysisFailed') || 'AI analysis failed. Please try again.');
+      }
     } finally {
       setIsAnalyzing(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -333,6 +411,7 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
     }
 
     setIsSubmitting(true);
+    setSubmitError(null);
 
     try {
       const newFeedback: FeedbackItem = {
@@ -355,9 +434,15 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (error) {
       console.error('Error submitting feedback:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to submit feedback';
+      setSubmitError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleDismissSubmitError = () => {
+    setSubmitError(null);
   };
 
   return (
@@ -517,7 +602,7 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
         {/* AI Analysis Progress */}
         {isAnalyzing && (
           <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-5 space-y-4 animate-in fade-in duration-300">
-            {/* Progress Header */}
+            {/* Progress Header with Cancel Button */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
@@ -528,7 +613,23 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
                   <p className="text-xs text-indigo-600 font-medium">{ANALYSIS_STEPS[currentStep].label}</p>
                 </div>
               </div>
-              <span className="text-lg font-black text-indigo-600">{Math.round(progress)}%</span>
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <span className="text-lg font-black text-indigo-600">{Math.round(progress)}%</span>
+                  <div className="text-[10px] text-indigo-500 font-bold">
+                    ~{estimatedTimeRemaining}s remaining
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={cancelAnalysis}
+                  className="px-3 py-2 bg-white border border-red-200 text-red-600 rounded-lg text-xs font-bold hover:bg-red-50 transition-colors flex items-center gap-2"
+                  title="Cancel analysis"
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                  <span className="hidden sm:inline">Cancel</span>
+                </button>
+              </div>
             </div>
 
             {/* Progress Bar */}
@@ -586,12 +687,79 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
           </div>
         )}
 
-        {/* AI Summary Display */}
+        {/* Analysis Error */}
+        {analysisError && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 animate-in fade-in duration-300">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <i className="fa-solid fa-exclamation-triangle text-red-600"></i>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-bold text-red-900 mb-1">Analysis Error</h4>
+                <p className="text-xs text-red-700 font-medium mb-3">{analysisError}</p>
+                <button
+                  type="button"
+                  onClick={() => setAnalysisError(null)}
+                  className="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-xs font-bold hover:bg-red-200 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Submit Error */}
+        {submitError && (
+          <div className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-r-lg animate-in fade-in duration-300">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <i className="fa-solid fa-circle-exclamation text-orange-600"></i>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-bold text-orange-900 mb-1">Submission Error</h4>
+                <p className="text-xs text-orange-700 font-medium mb-3">{submitError}</p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleDismissSubmitError}
+                    className="px-3 py-2 bg-orange-100 text-orange-700 rounded-lg text-xs font-bold hover:bg-orange-200 transition-colors"
+                  >
+                    Dismiss
+                  </button>
+                  <button
+                    type="button"
+                    onClick={isAnalyzed ? handleSubmit : handleAIPostFeedback}
+                    className="px-3 py-2 bg-orange-500 text-white rounded-lg text-xs font-bold hover:bg-orange-600 transition-colors"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* AI Summary Display with Success Animation */}
         {aiSummary && !isAnalyzing && (
-          <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg animate-in fade-in duration-300">
-            <div className="flex items-center gap-2 text-green-700 text-xs font-black uppercase tracking-wider mb-2">
-              <i className="fa-solid fa-check-circle"></i>
-              {t('aiAnalysis.summaryComplete')}
+          <div className={`bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg animate-in fade-in duration-300 ${showSuccessAnimation ? 'animate-pulse' : ''}`}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-green-700 text-xs font-black uppercase tracking-wider">
+                <i className={`fa-solid ${showSuccessAnimation ? 'fa-sparkles animate-bounce' : 'fa-check-circle'}`}></i>
+                {t('aiAnalysis.summaryComplete')}
+                {showSuccessAnimation && <span className="ml-2 text-xs font-bold">Analysis complete!</span>}
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-2 text-[10px] text-gray-500 font-bold cursor-pointer hover:text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={soundEnabled}
+                    onChange={(e) => setSoundEnabled(e.target.checked)}
+                    className="w-3 h-3 accent-green-600"
+                  />
+                  <i className="fa-solid fa-volume-high"></i>
+                </label>
+              </div>
             </div>
             <p className="text-sm text-green-900/70 font-medium">{aiSummary}</p>
           </div>

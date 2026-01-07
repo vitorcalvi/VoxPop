@@ -117,6 +117,7 @@
     "updateFailed": "Failed to update feedback. Please try again.",
     "deleteFailed": "Failed to delete feedback. Please try again.",
     "analysisFailed": "AI analysis failed. Please try again.",
+    "analysisCancelled": "Analysis cancelled by user",
     "roadmapFailed": "Failed to generate roadmap. Please try again.",
     "payloadTooLarge": "Images are too large. Please use fewer or smaller images (max 4MB total).",
     "invalidFileType": "Invalid file type. Please upload images only.",
