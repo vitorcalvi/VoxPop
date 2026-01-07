@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { FeedbackItem } from '../types';
 
-const API_BASE = import.meta.env.DEV ? 'http://localhost:3001/api' : '/api';
+const getApiBase = () => '/api';
 
 interface Props {
   onAdd: (feedback: FeedbackItem) => void;
@@ -11,7 +11,10 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [screenshots, setScreenshots] = useState<string[]>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAnalyzed, setIsAnalyzed] = useState(false);
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,9 +37,56 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
     setScreenshots((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
 
+  const handleAIPostFeedback = async () => {
+    if (!title || !description || isAnalyzing || isSubmitting) return;
+
+    setIsAnalyzing(true);
+    setAiSummary(null);
+
+    try {
+      const response = await fetch(`${getApiBase()}/ai/comprehensive-analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject: title,
+          details: description,
+          images: screenshots
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('AI analysis failed');
+      }
+
+      const data = await response.json();
+      setAiSummary(data.summary);
+      setIsAnalyzed(true);
+      
+      // Update title and description with AI-enhanced versions
+      if (data.enhancedSubject) {
+        setTitle(data.enhancedSubject);
+      }
+      if (data.enhancedDetails) {
+        setDescription(data.enhancedDetails);
+      }
+    } catch (error) {
+      console.error('AI analysis error:', error);
+      alert('AI analysis failed. Please try again.');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !description || isSubmitting) return;
+    
+    // Only allow submission after analysis is complete
+    if (!isAnalyzed || !title || !description || isSubmitting) {
+      if (!isAnalyzed) {
+        alert('Please complete AI analysis before submitting.');
+      }
+      return;
+    }
 
     setIsSubmitting(true);
     
@@ -56,6 +106,8 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
       setTitle('');
       setDescription('');
       setScreenshots([]);
+      setIsAnalyzed(false);
+      setAiSummary(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (error) {
       console.error('Error submitting feedback:', error);
@@ -192,27 +244,56 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
           </div>
         </div>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className={`w-full py-4 px-6 rounded-xl font-black text-white transition-all flex items-center justify-center gap-3 tracking-widest uppercase text-sm ${
-            isSubmitting ? 'bg-indigo-300 cursor-wait' : 'bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] shadow-lg shadow-indigo-200'
-          }`}
-        >
-          {isSubmitting ? (
-            <>
-              <i className="fa-solid fa-wand-magic-sparkles animate-pulse"></i>
-              AI is analyzing...
-            </>
-          ) : (
-            <>
-              <i className="fa-solid fa-paper-plane"></i>
-              Post Feedback
-            </>
-          )}
-        </button>
+        {/* AI Summary Display */}
+        {aiSummary && (
+          <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg animate-in fade-in duration-300">
+            <div className="flex items-center gap-2 text-green-700 text-xs font-black uppercase tracking-wider mb-2">
+              <i className="fa-solid fa-wand-magic-sparkles"></i>
+              AI Summary
+            </div>
+            <p className="text-sm text-green-900/70 font-medium">{aiSummary}</p>
+          </div>
+        )}
+
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={handleAIPostFeedback}
+            disabled={isAnalyzing || isSubmitting || !title || !description || screenshots.length === 0}
+            className={`flex-1 py-4 px-6 rounded-xl font-black transition-all flex items-center justify-center gap-3 tracking-widest uppercase text-sm ${
+              isAnalyzing 
+                ? 'bg-indigo-300 cursor-wait text-white' 
+                : !title || !description || screenshots.length === 0
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : isAnalyzed
+                    ? 'bg-green-500 hover:bg-green-600 active:scale-[0.98] shadow-lg shadow-green-200 text-white'
+                    : 'bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] shadow-lg shadow-indigo-200 text-white'
+            }`}
+          >
+            {isAnalyzing ? (
+              <>
+                <i className="fa-solid fa-wand-magic-sparkles animate-pulse"></i>
+                Analyzing...
+              </>
+            ) : isAnalyzed ? (
+              <>
+                <i className="fa-solid fa-check"></i>
+                AI Post Feedback
+              </>
+            ) : (
+              <>
+                <i className="fa-solid fa-robot"></i>
+                AI Post Feedback
+              </>
+            )}
+          </button>
+        </div>
         <p className="text-[9px] text-center text-gray-400 font-bold uppercase tracking-wider">
-          AI will analyze and categorize your feedback
+          {isAnalyzed 
+            ? 'Analysis complete - Ready to submit'
+            : screenshots.length > 0 
+              ? 'AI will analyze and summarize your feedback' 
+              : 'Attach screenshots to enable AI analysis'}
         </p>
       </form>
     </div>

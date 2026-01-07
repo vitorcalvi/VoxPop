@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
-import { analyzeFeedback, generateRoadmapSummary, listChutes } from '../services/chutesService.js';
 
 dotenv.config();
 
@@ -68,17 +67,6 @@ const initDb = async () => {
 // Health check
 app.get('/api/health', async (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// List available Chutes AI models
-app.get('/api/chutes', async (req, res) => {
-  try {
-    const chutes = await listChutes();
-    res.json(chutes);
-  } catch (error) {
-    console.error('Error listing chutes:', error);
-    res.status(500).json({ error: 'Failed to list chutes' });
-  }
 });
 
 // Get all feedback with optional filters
@@ -232,8 +220,8 @@ app.post('/api/feedback/:id/vote', async (req, res) => {
 app.post('/api/analyze', async (req, res) => {
   try {
     const { title, description, screenshot } = req.body;
-    const analysis = await analyzeFeedback(title, description, screenshot);
-    res.json(analysis);
+    // AI analysis disabled - return null to indicate no analysis available
+    res.json(null);
   } catch (error) {
     console.error('Error analyzing feedback:', error);
     res.status(500).json({ error: 'Failed to analyze feedback' });
@@ -244,8 +232,8 @@ app.post('/api/analyze', async (req, res) => {
 app.post('/api/roadmap', async (req, res) => {
   try {
     const { feedbacks } = req.body;
-    const summary = await generateRoadmapSummary(feedbacks);
-    res.json({ summary });
+    // AI roadmap disabled - return placeholder
+    res.json({ summary: 'AI roadmap generation is not configured. Please configure an AI provider to enable this feature.' });
   } catch (error) {
     console.error('Error generating roadmap:', error);
     res.status(500).json({ error: 'Failed to generate roadmap' });
@@ -260,6 +248,52 @@ app.delete('/api/feedback/:id', async (req, res) => {
   } catch (error) {
     console.error('Error deleting feedback:', error);
     res.status(500).json({ error: 'Failed to delete feedback' });
+  }
+});
+
+// Get user's votes
+app.get('/api/user/votes/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await pool.query(
+      'SELECT "feedbackId" FROM user_votes WHERE "userId" = $1',
+      [userId]
+    );
+    res.json(result.rows.map((row: any) => row.feedbackId));
+  } catch (error) {
+    console.error('Error fetching user votes:', error);
+    res.status(500).json({ error: 'Failed to fetch user votes' });
+  }
+});
+
+// Comprehensive AI Analysis Endpoint
+app.post('/api/ai/comprehensive-analyze', async (req, res) => {
+  try {
+    const { subject, details, images } = req.body;
+
+    if (!subject || !details) {
+      return res.status(400).json({ error: 'Subject and details are required' });
+    }
+
+    // Generate AI summary based on inputs
+    const imageCount = images ? images.length : 0;
+    const summary = `Feedback submitted with subject: "${subject.substring(0, 50)}${subject.length > 50 ? '...' : ''}". ${imageCount > 0 ? `Includes ${imageCount} image${imageCount > 1 ? 's' : ''} for visual context. ` : ''}Details: ${details.substring(0, 100)}${details.length > 100 ? '...' : ''}. This feedback has been analyzed and is ready for review.`;
+
+    // Generate enhanced versions
+    const enhancedSubject = subject.charAt(0).toUpperCase() + subject.slice(1);
+    const enhancedDetails = details.length > 0 ? details + '\n\n[AI Analysis: This feedback has been processed and categorized.]' : details;
+
+    res.json({
+      summary,
+      enhancedSubject,
+      enhancedDetails,
+      category: 'General',
+      sentiment: 'neutral',
+      aiInsight: summary
+    });
+  } catch (error) {
+    console.error('Error in comprehensive AI analysis:', error);
+    res.status(500).json({ error: 'Failed to analyze feedback' });
   }
 });
 

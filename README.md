@@ -1,16 +1,14 @@
 # VoxPop - AI-Powered Feedback System
 
-An intelligent feedback management application powered by Chutes AI (LLM models) and PostgreSQL.
+An intelligent feedback management application powered by PostgreSQL with placeholder for future AI integration.
 
 ## 🚀 Features
 
-- **AI-Powered Analysis**: Automatic categorization, sentiment analysis, and insight generation using custom LLM models deployed on Chutes AI
-- **Multimodal Support**: Text + Screenshot analysis for visual feedback context
+- **Feedback Management**: Submit, categorize, and track user feedback
 - **Real-Time Database**: Persistent storage with PostgreSQL (Neon Cloud)
 - **Smart Filtering**: Dynamic category extraction and search functionality
-- **AI Roadmap Generation**: Automatic product roadmap summaries based on feedback
-- **Responsive Design**: Mobile-first UI with Tailwind CSS
 - **Vote System**: User-agnostic voting with deduplication
+- **Responsive Design**: Mobile-first UI with Tailwind CSS
 
 ## 🏗️ Architecture
 
@@ -20,15 +18,6 @@ An intelligent feedback management application powered by Chutes AI (LLM models)
 │  (React/Vite)  │   5000     │   (Express)   │   (Neon)    │
 │  Port: 5173     │            │  Port: 5000   │              │
 └─────────────────┘            └──────────────┘              └─────────────┘
-                                             ▲
-                                             │
-                                    HTTP API
-                                             │
-                                    ┌──────────────┐
-                                    │   Chutes AI  │
-                                    │  (LLM Model) │
-                                    │  (Chute ID)  │
-                                    └──────────────┘
 ```
 
 ## 🛠️ Tech Stack
@@ -50,10 +39,6 @@ An intelligent feedback management application powered by Chutes AI (LLM models)
 - **PostgreSQL** - Primary database
 - **Neon Cloud** - Managed PostgreSQL hosting
 
-### AI Services
-- **Chutes AI** - LLM model deployment and inference (deploy your own model)
-- **Custom LLM Models** - Any compatible model (Llama, Mistral, etc.)
-
 ## 📦 Installation
 
 ```bash
@@ -66,7 +51,7 @@ npm install
 
 # Create .env file
 cp .env.example .env
-# Edit .env with your API keys
+# Edit .env with your database URL
 ```
 
 ## ⚙️ Configuration
@@ -77,32 +62,9 @@ Create a `.env` file in project root:
 # PostgreSQL Database (Neon)
 DATABASE_URL="postgresql://neondb_owner:password@ep-host-name-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require"
 
-# Chutes AI API Key (required for AI analysis)
-CHUTES_API_KEY=cpk_baee7a2deb56498aa5c1e7f83cd6ea35.89c85babdb2f5fee845af071220bfcc3.f3Gw21b2zXjfyeW1hncDgmLGjrffksfs
-
-# Chute ID (required - your deployed LLM model's ID)
-# Step 1: Deploy an LLM model on Chutes AI console
-# Step 2: Copy the chute_id from your deployed model
-# Step 3: Paste it below
-CHUTE_ID=your-deployed-chute-id-here
-
 # Server Port
 PORT=5000
 ```
-
-### Setting Up Chutes AI
-
-1. **Create Account**: Sign up at [chutes.ai](https://chutes.ai)
-2. **Get API Key**: Copy your API key from account settings
-3. **Deploy an LLM Model**:
-   - Go to Chutes AI console
-   - Choose an LLM model (Llama, Mistral, etc.)
-   - Deploy it as a "chute"
-   - Copy the `chute_id` from the deployed model
-4. **Configure Environment**:
-   - Add `CHUTES_API_KEY` to `.env` (from step 2)
-   - Add `CHUTE_ID` to `.env` (the chute ID from step 3)
-5. **Neon Database**: Create a PostgreSQL database on [neon.tech](https://neon.tech) and copy connection string to `.env`
 
 ### Getting Started
 
@@ -182,9 +144,6 @@ npm run preview
 
 #### GET `/api/health`
 Health check endpoint.
-
-#### GET `/api/chutes`
-Lists all deployed Chutes AI models (chutes) for the account.
 
 #### GET `/api/feedback?category={category}&search={query}`
 Fetch feedback with optional filters.
@@ -281,49 +240,6 @@ Delete feedback item.
 
 **Response**: Success message
 
-## 🤖 AI Features
-
-### Feedback Analysis
-
-When users submit feedback, the system:
-1. Sends title, description, and optional screenshot to Chutes AI
-2. Invokes the deployed LLM model via job system
-3. Polls for job completion (async execution)
-4. Receives structured analysis including:
-   - **Category**: Auto-categorized (Feature, Bug, UI/UX, etc.)
-   - **Sentiment**: Detected emotional tone (positive, neutral, negative)
-   - **Tags**: Relevant keywords for filtering
-   - **Impact Score**: Priority rating (1-10)
-   - **AI Insight**: Concise explanation of importance
-5. Stores analysis with feedback in database
-
-### Roadmap Generation
-
-The AI Roadmap feature:
-1. Collects all feedback from database
-2. Sends to deployed LLM model for summary via Chutes AI
-3. Polls for job completion
-4. Returns prioritized themes and suggestions
-5. Displays in a styled modal overlay
-
-### Chutes AI Workflow
-
-1. **Deploy Model**: Deploy an LLM (Llama, Mistral, etc.) as a "chute" on Chutes AI
-2. **Get Chute ID**: Copy the `chute_id` from your deployed model
-3. **Set CHUTE_ID**: Add `CHUTE_ID=<chute_id>` to `.env`
-4. **Run Application**: System will use your deployed model for all AI analysis
-
-### Supported Categories
-
-AI automatically classifies feedback into:
-- **Feature** - New functionality requests
-- **Bug** - Defects or errors
-- **UI/UX** - Interface or user experience issues
-- **Performance** - Speed or resource concerns
-- **Mobile** - Mobile-specific issues
-- **Security** - Security vulnerabilities or concerns
-- **Other** - General feedback
-
 ## 🎨 UI Components
 
 ### FeedbackCard
@@ -347,7 +263,6 @@ Filtering panel with:
 - Dynamic category list
 - Active category highlighting
 - "All Feedback" option
-- Chutes AI model info card
 
 ## 📱 Responsive Breakpoints
 
@@ -407,7 +322,6 @@ node dist/index.js
 - Automatic backups included
 
 ### Environment Checklist
-- [ ] Set `CHUTES_API_KEY` and `CHUTE_ID` in production environment
 - [ ] Update `DATABASE_URL` to production Neon URL
 - [ ] Configure proper domain for API
 - [ ] Enable SSL certificates
@@ -421,20 +335,11 @@ node dist/index.js
 - Check port 5000 is not in use
 - Verify DATABASE_URL is correct
 - Check Node.js version (>= 18)
-- Verify CHUTES_API_KEY is set
-- Verify CHUTE_ID is set (deployed model required)
 
 ### Database connection errors
 - Verify Neon database is active
 - Check SSL is enabled in connection string
 - Test connection with psql or Neon console
-
-### AI analysis fails
-- Verify CHUTES_API_KEY is set
-- Check API key has proper permissions
-- Verify CHUTE_ID points to a valid, deployed model
-- Check model is active on Chutes AI
-- Check network connectivity to Chutes AI
 
 ### Frontend won't load
 - Check Vite is running on port 5173
@@ -445,12 +350,6 @@ node dist/index.js
 - Check file size (should be < 10MB)
 - Verify image format (jpg, png, webp)
 - Check browser permissions
-
-### Chutes AI Job Timeout
-- Increase timeout in chutesService.ts (default 30 seconds)
-- Check model status on Chutes AI console
-- Verify model has available GPU resources
-- Try deploying a different model
 
 ## 📝 Development Notes
 
@@ -463,7 +362,6 @@ node dist/index.js
 ### Testing
 - Test API endpoints with curl or Postman
 - Test database queries in Neon console
-- Test AI prompts in Chutes AI console
 - Test responsive design with browser dev tools
 
 ### Debugging
@@ -471,7 +369,6 @@ node dist/index.js
 - Frontend errors in browser console
 - Use Chrome DevTools for React debugging
 - Check Network tab for API calls
-- Monitor Chutes AI job status
 
 ## 🤝 Contributing
 
@@ -496,7 +393,6 @@ This project is proprietary and confidential.
 For issues and questions:
 - Check AGENTS.md for development documentation
 - Review API endpoints for integration
-- Deploy a compatible LLM model on Chutes AI
 - Contact development team
 
 ## 🔮 Future Enhancements
@@ -506,7 +402,6 @@ For issues and questions:
 - [ ] Email notifications for updates
 - [ ] Integration with project management tools
 - [ ] Advanced analytics dashboard
-- [ ] Multiple LLM model support (select different chutes)
 - [ ] Mobile app development
 - [ ] Dark mode support
 - [ ] Internationalization (i18n)
@@ -515,4 +410,4 @@ For issues and questions:
 
 ---
 
-**Built with ❤️ using Chutes AI and Neon**
+**Built with ❤️ using VoxPop**

@@ -5,15 +5,12 @@
 - Vercel account ([vercel.com](https://vercel.com))
 - GitHub repository with VoxPop code
 - Neon PostgreSQL database ([neon.tech](https://neon.tech))
-- Chutes AI account with deployed model ([chutes.ai](https://chutes.ai))
 
 ## Step 1: Prepare Environment Variables
 
 Set these environment variables in your project:
 
 1. **DATABASE_URL** - Get from Neon console
-2. **CHUTES_API_KEY** - Get from Chutes AI console
-3. **CHUTE_ID** - Your deployed model's chute ID from Chutes AI
 
 ## Step 2: Deploy to Vercel
 
@@ -42,13 +39,11 @@ vercel
 
 Add these in Vercel dashboard (Project Settings → Environment Variables):
 
-| Variable | Value | Environment |
-|----------|--------|-------------|
-| `DATABASE_URL` | Your Neon connection string | Production, Preview, Development |
-| `CHUTES_API_KEY` | Your Chutes AI API key | Production, Preview, Development |
-| `CHUTE_ID` | Your Chute ID | Production, Preview, Development |
+|| Variable | Value | Environment |
+||----------|--------|-------------|
+|| `DATABASE_URL` | Your Neon connection string | Production, Preview, Development |
 
-**Important:** Add `DATABASE_URL` from Neon's connection string format:
+|**Important:** Add `DATABASE_URL` from Neon's connection string format:
 ```
 postgresql://username:password@ep-xxx.region.aws.neon.tech/neondb?sslmode=require
 ```
@@ -59,7 +54,7 @@ After deployment:
 
 1. Visit your Vercel URL (e.g., `https://voxpop.vercel.app`)
 2. Check health endpoint: `https://your-domain.vercel.app/api/health`
-3. Submit a test feedback to verify AI analysis works
+3. Submit a test feedback to verify the application works
 
 ## Custom Domain (Optional)
 
@@ -68,10 +63,6 @@ After deployment:
 3. Update DNS records as instructed by Vercel
 
 ## Troubleshooting
-
-### "Failed to analyze feedback"
-- Check `CHUTES_API_KEY` and `CHUTE_ID` are set correctly
-- Verify your model is deployed on Chutes AI
 
 ### "Database connection failed"
 - Verify `DATABASE_URL` is correct
@@ -93,7 +84,6 @@ After deployment:
 - Check Vercel Analytics for performance
 - Use Vercel Logs for debugging errors
 - Monitor Neon database usage
-- Track Chutes AI API quota
 
 ## CI/CD
 

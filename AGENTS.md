@@ -4,14 +4,12 @@ This document helps AI agents work effectively in the VoxPop codebase.
 
 ## Project Overview
 
-VoxPop is an AI-powered feedback management application built with React, TypeScript, Express.js, and PostgreSQL (Neon). It uses Chutes AI for model deployment and inference, providing real-time database storage with custom LLM integration.
+VoxPop is an AI-powered feedback management application built with React, TypeScript, Express.js, and PostgreSQL (Neon). It provides real-time database storage with feedback management capabilities.
 
 ### Architecture
 - **Frontend**: React 18.3.1 + TypeScript + Vite + Tailwind CSS (CDN)
 - **Backend**: Express.js + TypeScript + pg (node-postgres)
 - **Database**: PostgreSQL (Neon Cloud)
-- **AI Service**: Chutes AI for model deployment and LLM inference
-- **LLM Model**: Custom deployed model on Chutes AI (specified by CHUTE_ID)
 
 ## Essential Commands
 
@@ -51,7 +49,7 @@ npm run preview
 │   ├── FeedbackForm.tsx  # Feedback submission form
 │   └── Sidebar.tsx      # Category filtering sidebar
 ├── services/
-│   └── chutesService.ts # Chutes AI integration for LLM inference
+│   └── chutesService.ts # AI service (placeholder - requires configuration)
 └── .env                 # Environment variables
 ```
 
@@ -236,45 +234,6 @@ Delete feedback item.
 - UNIQUE(userId, feedbackId)
 ```
 
-## AI Integration (Chutes AI)
-
-### Configuration
-- **API Key**: Set `CHUTES_API_KEY` in `.env` file
-- **Chute ID**: Set `CHUTE_ID` in `.env` (ID of deployed LLM model)
-- **Service File**: `services/chutesService.ts`
-
-### Chutes AI Workflow
-
-1. **Deploy a Model**: Go to Chutes AI console and deploy an LLM model (Llama, Mistral, etc.)
-2. **Get Chute ID**: Copy the `chute_id` from deployed model
-3. **Set CHUTE_ID**: Add `CHUTE_ID=<chute_id>` to `.env`
-4. **Run App**: System will use deployed model for inference
-
-### Analysis Functions
-
-#### analyzeFeedback(title, description, screenshot?)
-Analyzes feedback using deployed LLM model via Chutes AI. Creates a job, polls for completion, and returns:
-```typescript
-{
-  category: string;         // Feature, Bug, UI/UX, Performance, Mobile, Security
-  sentiment: 'positive' | 'neutral' | 'negative';
-  suggestedTags: string[];
-  impactScore: number;      // 1-10 priority
-  aiInsight: string;         // Concise insight from AI
-}
-```
-
-#### generateRoadmapSummary(feedbacks[])
-Generates roadmap summary using deployed LLM model via Chutes AI.
-
-#### listChutes()
-Lists all deployed chutes for the account.
-
-### Chutes AI API Usage
-- **Job Creation**: POST `/jobs/{chute_id}/chat` to invoke model
-- **Job Polling**: GET `/jobs/{job_id}` to check completion
-- **Async Execution**: Jobs run asynchronously, must poll for results
-
 ## Important Gotchas
 
 ### Database Connection
@@ -291,12 +250,6 @@ Lists all deployed chutes for the account.
 - **Frontend (Vite)**: Port 5173 (default)
 - **Backend (Express)**: Port 5000
 - Both run concurrently with `npm run dev`
-
-### Chutes AI API Key
-- Required for AI analysis features
-- Set in `.env` as `CHUTES_API_KEY=cpk-...`
-- Also set `CHUTE_ID` to your deployed model's chute_id
-- Without proper configuration, analysis will fail gracefully (returns null)
 
 ### TypeScript in Backend
 - Backend runs with `tsx` for TypeScript execution
@@ -322,12 +275,6 @@ Create a `.env` file in project root:
 # PostgreSQL Database (Neon)
 DATABASE_URL="postgresql://user:pass@host:port/dbname?sslmode=require"
 
-# Chutes AI API (for LLM model deployment and inference)
-CHUTES_API_KEY=cpk-your-chutes-api-key
-
-# Chute ID (the deployed model to use for analysis)
-CHUTE_ID=your-deployed-chute-id-here
-
 # Server
 PORT=5000
 ```
@@ -339,8 +286,7 @@ When extending the application:
 1. **Backend**: Add new API endpoints in `server/index.ts`
 2. **Database**: Modify tables in `server/index.ts` initDb function
 3. **Frontend**: Create components in `/components/` following existing patterns
-4. **AI**: Add new service functions in `/services/chutesService.ts`
-5. **Styling**: Use existing Tailwind color scheme (indigo primary)
+4. **Styling**: Use existing Tailwind color scheme (indigo primary)
 
 ## Common Tasks
 
@@ -352,12 +298,6 @@ Categories are dynamic - extracted from feedback items in database. No hardcoded
 2. Implement async handler with try/catch
 3. Use `pool.query()` for database operations
 4. Return JSON response with appropriate status code
-
-### Changing AI Model
-1. Deploy new model on Chutes AI console
-2. Copy the new `chute_id` from deployed model
-3. Update `CHUTE_ID` in `.env` file
-4. Restart backend server to apply changes
 
 ### Adding a New Status
 1. Update status enum in database schema (if using Prisma)
@@ -404,7 +344,6 @@ const inserted = await pool.query(
 
 ### Production Checklist
 - [ ] Update `API_BASE` in frontend to production URL
-- [ ] Set proper `CHUTES_API_KEY` and `CHUTE_ID` in production environment
 - [ ] Configure PostgreSQL for production load
 - [ ] Enable HTTPS for backend server
 - [ ] Set up proper user authentication

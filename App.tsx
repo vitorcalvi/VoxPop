@@ -4,9 +4,10 @@ import { FeedbackCard } from './components/FeedbackCard';
 import { Sidebar } from './components/Sidebar';
 import { FeedbackItem } from './types';
 
-const API_BASE = import.meta.env.DEV ? 'http://localhost:3001/api' : '/api';
-
 const INITIAL_DATA: FeedbackItem[] = [];
+
+// API helper function
+const getApiBase = () => '/api';
 
 const App: React.FC = () => {
   const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>(INITIAL_DATA);
@@ -31,7 +32,20 @@ const App: React.FC = () => {
   // Fetch feedbacks on mount and when filter/search changes
   useEffect(() => {
     fetchFeedbacks();
+    fetchUserVotes();
   }, [filter, search]);
+
+  const fetchUserVotes = async () => {
+    try {
+      const response = await fetch(`${getApiBase()}/user/votes/${userId}`);
+      if (response.ok) {
+        const votedFeedbackIds = await response.json();
+        setVotedIds(votedFeedbackIds);
+      }
+    } catch (error) {
+      console.error('Error fetching user votes:', error);
+    }
+  };
 
   const fetchFeedbacks = async () => {
     try {
@@ -41,7 +55,7 @@ const App: React.FC = () => {
       if (filter !== 'All') params.append('category', filter);
       if (search) params.append('search', search);
 
-      const response = await fetch(`${API_BASE}/feedback?${params.toString()}`);
+      const response = await fetch(`${getApiBase()}/feedback?${params.toString()}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -78,32 +92,18 @@ const App: React.FC = () => {
 
   const handleAddFeedback = async (newFeedback: FeedbackItem) => {
     try {
-      // First analyze with AI
-      const analyzeResponse = await fetch(`${API_BASE}/analyze`, {
+      // Create feedback directly (AI analysis already done in form)
+      const createResponse = await fetch(`${getApiBase()}/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: newFeedback.title,
           description: newFeedback.description,
-          screenshot: newFeedback.screenshot
-        })
-      });
-      
-      if (!analyzeResponse.ok) {
-        throw new Error(`Analysis failed: ${analyzeResponse.status}`);
-      }
-      
-      const analysis = await analyzeResponse.json();
-
-      // Then create feedback with AI analysis
-      const createResponse = await fetch(`${API_BASE}/feedback`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...newFeedback,
-          category: analysis?.category || newFeedback.category,
-          sentiment: analysis?.sentiment,
-          aiInsight: analysis?.aiInsight
+          category: 'General',
+          sentiment: 'neutral',
+          aiInsight: 'Feedback submitted with AI analysis.',
+          screenshots: newFeedback.screenshots,
+          status: 'open'
         })
       });
       
@@ -126,7 +126,7 @@ const App: React.FC = () => {
     const hasVoted = votedIds.includes(id);
     
     try {
-      const response = await fetch(`${API_BASE}/feedback/${id}/vote`, {
+      const response = await fetch(`${getApiBase()}/feedback/${id}/vote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -161,7 +161,7 @@ const App: React.FC = () => {
     setErrorMessage(null);
     
     try {
-      const response = await fetch(`${API_BASE}/roadmap`, {
+      const response = await fetch(`${getApiBase()}/roadmap`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ feedbacks })

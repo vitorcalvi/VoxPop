@@ -21,3 +21,13 @@ export interface AIAnalysisResult {
   impactScore: number;
   aiInsight: string;
 }
+
+export interface ImageAnalysisResult {
+  subject: string;
+  details: string;
+  category: string;
+  sentiment: 'positive' | 'neutral' | 'negative';
+  suggestedTags: string[];
+  impactScore: number;
+  aiInsight: string;
+}
