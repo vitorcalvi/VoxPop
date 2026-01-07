@@ -1,0 +1,47 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Feedback items model
+model FeedbackItem {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  category    String
+  votes       Int      @default(1)
+  status      FeedbackStatus @default(OPEN)
+  sentiment    String?
+  aiInsight   String?
+  screenshot   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("feedback_items")
+}
+
+// User votes tracking
+model UserVote {
+  id          String   @id @default(uuid())
+  userId      String
+  feedbackId  String
+  votedAt     BigInt   @default(dbgenerated("extract(epoch from now()) * 1000"))
+
+  @@unique([userId, feedbackId])
+  @@map("user_votes")
+}
+
+enum FeedbackStatus {
+  OPEN
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CLOSED
+}
