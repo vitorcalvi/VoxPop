@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { FeedbackForm } from './components/FeedbackForm';
 import { FeedbackCard } from './components/FeedbackCard';
+import { FeedbackModal } from './components/FeedbackModal';
 import { Sidebar } from './components/Sidebar';
 import { FeedbackItem } from './types';
 
@@ -18,6 +19,8 @@ const App: React.FC = () => {
   const [isGeneratingRoadmap, setIsGeneratingRoadmap] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [selectedFeedback, setSelectedFeedback] = useState<FeedbackItem | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Generate a simple user ID for this browser session
   const userId = useMemo(() => {
@@ -185,6 +188,66 @@ const App: React.FC = () => {
     setErrorMessage(null);
   };
 
+  const handleCardClick = (feedback: FeedbackItem) => {
+    setSelectedFeedback(feedback);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedFeedback(null);
+  };
+
+  const handleUpdateFeedback = async (updated: FeedbackItem) => {
+    try {
+      const response = await fetch(`${getApiBase()}/feedback/${updated.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: updated.title,
+          description: updated.description,
+          category: updated.category,
+          status: updated.status,
+          sentiment: updated.sentiment,
+          aiInsight: updated.aiInsight
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Update failed: ${response.status}`);
+      }
+
+      const savedFeedback = await response.json();
+      setFeedbacks(prev => prev.map(f => f.id === savedFeedback.id ? savedFeedback : f));
+      setSelectedFeedback(savedFeedback);
+      setErrorMessage(null);
+    } catch (error) {
+      console.error('Error updating feedback:', error);
+      setErrorMessage('Failed to update feedback. Please try again.');
+      throw error;
+    }
+  };
+
+  const handleDeleteFeedback = async (id: string) => {
+    try {
+      const response = await fetch(`${getApiBase()}/feedback/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        throw new Error(`Delete failed: ${response.status}`);
+      }
+
+      setFeedbacks(prev => prev.filter(f => f.id !== id));
+      setIsModalOpen(false);
+      setSelectedFeedback(null);
+      setErrorMessage(null);
+    } catch (error) {
+      console.error('Error deleting feedback:', error);
+      setErrorMessage('Failed to delete feedback. Please try again.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F8F9FE] selection:bg-indigo-100">
       {/* Navbar */}
@@ -314,11 +377,12 @@ const App: React.FC = () => {
               <div className="space-y-6">
                 {feedbacks.length > 0 ? (
                   feedbacks.map(f => (
-                    <FeedbackCard 
-                      key={f.id} 
-                      feedback={f} 
+                    <FeedbackCard
+                      key={f.id}
+                      feedback={f}
                       hasVoted={votedIds.includes(f.id)}
                       onVote={handleVote}
+                      onClick={handleCardClick}
                     />
                   ))
                 ) : (
@@ -340,6 +404,15 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        feedback={selectedFeedback}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSave={handleUpdateFeedback}
+        onDelete={handleDeleteFeedback}
+      />
     </div>
   );
 };

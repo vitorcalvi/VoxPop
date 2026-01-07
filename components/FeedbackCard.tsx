@@ -6,6 +6,7 @@ interface Props {
   feedback: FeedbackItem;
   hasVoted: boolean;
   onVote: (id: string) => void;
+  onClick: (feedback: FeedbackItem) => void;
 }
 
 const statusColors: Record<string, string> = {
@@ -16,7 +17,7 @@ const statusColors: Record<string, string> = {
   'closed': 'bg-red-100 text-red-600',
 };
 
-export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote }) => {
+export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote, onClick }) => {
   // Support both legacy single screenshot and new screenshots array
   const screenshots = feedback.screenshots || (feedback.screenshot ? [feedback.screenshot] : []);
   const hasScreenshots = screenshots.length > 0;
@@ -78,14 +79,17 @@ export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote }) =>
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:border-indigo-300 transition-all flex gap-4 group">
+    <div
+      className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:border-indigo-300 hover:shadow-md transition-all flex gap-4 group cursor-pointer"
+      onClick={() => onClick(feedback)}
+    >
       {/* Vote Button */}
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={() => onVote(feedback.id)}
           className={`w-12 h-16 flex flex-col items-center justify-center rounded-lg border-2 transition-all ${
-            hasVoted 
-              ? 'bg-indigo-50 border-indigo-500 text-indigo-600 shadow-sm' 
+            hasVoted
+              ? 'bg-indigo-50 border-indigo-500 text-indigo-600 shadow-sm'
               : 'border-gray-100 hover:border-gray-300 text-gray-400'
           }`}
         >
@@ -118,8 +122,8 @@ export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote }) =>
           </div>
           
           {hasScreenshots && (
-            <div className="flex-shrink-0">
-              <div 
+            <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+              <div
                 className={`relative ${feedback.screenshots && feedback.screenshots.length > 1 ? 'w-24' : 'w-20'}`}
                 onClick={feedback.screenshots && feedback.screenshots.length > 1 ? openGallery : () => openScreenshot(screenshots[0])}
               >

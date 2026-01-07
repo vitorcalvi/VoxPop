@@ -77,8 +77,8 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     
     // Only allow submission after analysis is complete
     if (!isAnalyzed || !title || !description || isSubmitting) {
@@ -258,7 +258,7 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
         <div className="flex gap-3">
           <button
             type="button"
-            onClick={handleAIPostFeedback}
+            onClick={isAnalyzed ? handleSubmit : handleAIPostFeedback}
             disabled={isAnalyzing || isSubmitting || !title || !description || screenshots.length === 0}
             className={`flex-1 py-4 px-6 rounded-xl font-black transition-all flex items-center justify-center gap-3 tracking-widest uppercase text-sm ${
               isAnalyzing 
