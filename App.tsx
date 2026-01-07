@@ -162,23 +162,36 @@ const App: React.FC = () => {
     if (feedbacks.length === 0) return;
     setIsGeneratingRoadmap(true);
     setErrorMessage(null);
-    
+
     try {
+      // Optimize payload: send only essential fields to avoid 413 Payload Too Large
+      const optimizedFeedbacks = feedbacks.map(f => ({
+        id: f.id,
+        title: f.title,
+        category: f.category,
+        votes: f.votes,
+        sentiment: f.sentiment,
+        aiInsight: f.aiInsight ? f.aiInsight.substring(0, 200) : undefined
+      }));
+
       const response = await fetch(`${getApiBase()}/roadmap`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ feedbacks })
+        body: JSON.stringify({ feedbacks: optimizedFeedbacks })
       });
-      
+
       if (!response.ok) {
+        if (response.status === 413) {
+          throw new Error('Payload too large. Try reducing the number of feedback items.');
+        }
         throw new Error(`Roadmap generation failed: ${response.status}`);
       }
-      
+
       const data = await response.json();
       setRoadmapSummary(data.summary);
     } catch (error) {
       console.error('Error generating roadmap:', error);
-      setErrorMessage('Failed to generate roadmap. Please try again.');
+      setErrorMessage(`Failed to generate roadmap: ${error instanceof Error ? error.message : 'Please try again.'}`);
     } finally {
       setIsGeneratingRoadmap(false);
     }
@@ -336,7 +349,7 @@ const App: React.FC = () => {
             </aside>
 
             {/* Feed Container */}
-            <div className="lg:col-span-5 space-y-8">
+            <div className="lg:col-span-5 space-y-8 relative z-0">
               <div className="flex items-end justify-between">
                 <div>
                   <h2 className="text-3xl font-black text-gray-900 mb-1">
@@ -398,7 +411,7 @@ const App: React.FC = () => {
             </div>
 
             {/* Form Area */}
-            <div className="lg:col-span-4 lg:sticky lg:top-32 h-fit">
+            <div className="lg:col-span-4 lg:sticky lg:top-32 h-fit relative z-10">
               <FeedbackForm onAdd={handleAddFeedback} />
             </div>
           </div>

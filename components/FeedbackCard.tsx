@@ -80,7 +80,7 @@ export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote, onCl
 
   return (
     <div
-      className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:border-indigo-300 hover:shadow-md transition-all flex gap-4 group cursor-pointer"
+      className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:border-indigo-300 hover:shadow-md transition-all flex gap-4 group cursor-pointer overflow-hidden relative"
       onClick={() => onClick(feedback)}
     >
       {/* Vote Button */}
@@ -98,7 +98,7 @@ export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote, onCl
         </button>
       </div>
 
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 overflow-hidden">
         <div className="flex items-center flex-wrap gap-2 mb-2">
           <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${statusColors[feedback.status]}`}>
             {feedback.status}
@@ -113,8 +113,8 @@ export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote, onCl
           )}
         </div>
         
-        <div className="flex flex-col md:flex-row justify-between gap-4">
-          <div className="flex-1">
+        <div className="flex flex-col md:flex-row justify-between gap-4 overflow-hidden">
+          <div className="flex-1 min-w-0">
             <h3 className="text-lg font-bold text-gray-800 leading-tight mb-2 truncate group-hover:text-indigo-600 transition-colors">
               {feedback.title}
             </h3>
@@ -122,7 +122,7 @@ export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote, onCl
           </div>
           
           {hasScreenshots && (
-            <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+            <div className="flex-shrink-0 overflow-visible pb-2" onClick={(e) => e.stopPropagation()}>
               <div
                 className={`relative ${feedback.screenshots && feedback.screenshots.length > 1 ? 'w-24' : 'w-20'}`}
                 onClick={feedback.screenshots && feedback.screenshots.length > 1 ? openGallery : () => openScreenshot(screenshots[0])}

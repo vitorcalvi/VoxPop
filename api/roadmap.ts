@@ -1,4 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { generateRoadmapSummary } from '../services/chutesService';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
@@ -18,17 +19,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { feedbacks } = req.body;
 
-    if (!feedbacks || feedbacks.length === 0) {
+    if (!feedbacks || !Array.isArray(feedbacks)) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        summary: 'Feedbacks array is required'
+      });
+    }
+
+    if (feedbacks.length === 0) {
       return res.status(200).json({ summary: 'No feedback to generate roadmap from.' });
     }
 
-    // AI roadmap disabled - return placeholder with feedback overview
-    return res.status(200).json({
-      summary: 'AI Roadmap Generation\n\nPlease configure an AI provider to enable AI-powered roadmap generation.\n\nIn the meantime, here are the feedback categories:\n' +
-        feedbacks.map((f: any) => `- [${f.category}] ${f.title}`).join('\n')
-    });
+    // Log payload size for monitoring
+    const payloadSize = JSON.stringify(req.body).length;
+    console.log(`Roadmap request: ${feedbacks.length} items, ~${(payloadSize / 1024).toFixed(2)} KB`);
+
+    const summary = await generateRoadmapSummary(feedbacks);
+    return res.status(200).json({ summary });
   } catch (error) {
     console.error('Roadmap Error:', error);
-    return res.status(200).json({ summary: 'Unable to generate roadmap summary.' });
+    return res.status(500).json({
+      error: 'Failed to generate roadmap',
+      details: error instanceof Error ? error.message : 'Unknown error',
+      summary: 'An error occurred while generating roadmap. Please try again.'
+    });
   }
 }

@@ -1,5 +1,4 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { analyzeFeedback } from '../services/chutesService';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
@@ -17,11 +16,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { title, description, screenshot } = req.body;
-    const result = await analyzeFeedback(title, description, screenshot);
-    return res.status(200).json(result);
+    const { subject, details } = req.body;
+    console.log('Test endpoint called with:', { subject, detailsLength: details?.length });
+
+    return res.status(200).json({
+      message: 'Test endpoint working',
+      received: { subject, details }
+    });
   } catch (error) {
-    console.error('Analysis Error:', error);
-    return res.status(500).json({ error: 'Failed to analyze feedback' });
+    console.error('Test endpoint error:', error);
+    return res.status(500).json({ error: 'Test failed', details: (error as Error).message });
   }
 }

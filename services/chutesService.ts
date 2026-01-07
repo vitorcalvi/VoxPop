@@ -56,7 +56,9 @@ const MODELS = {
 };
 
 const getApiKey = (): string | null => {
-  return process.env.CHUTES_API_KEY || null;
+  const apiKey = process.env.CHUTES_API_KEY || null;
+  console.log('🔑 getApiKey called:', apiKey ? 'Key found' : 'No key configured');
+  return apiKey;
 };
 
 interface Message {
@@ -93,16 +95,22 @@ const callChutesAPI = async (
       })
     });
 
+    console.log(`📡 API response status: ${response.status} ${response.statusText}`);
+
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Chutes API error (${model}):`, response.status, errorText);
+      console.error(`❌ Chutes API error (${model}):`, response.status, errorText);
       return null;
     }
 
     const data = await response.json();
-    return data.choices?.[0]?.message?.content || null;
+    console.log('✅ API response received, extracting content...');
+    const content = data.choices?.[0]?.message?.content || null;
+    console.log(`📄 Content length: ${content?.length || 0} chars`);
+    return content;
   } catch (error) {
-    console.error(`Chutes API request failed (${model}):`, error);
+    console.error(`❌ Chutes API request failed (${model}):`, error);
+    console.error('Error details:', (error as Error).message);
     return null;
   }
 };
@@ -282,7 +290,7 @@ export const comprehensiveAnalyze = async (
   subject: string,
   details: string,
   images?: string[]
-): Promise<DetailedSummary | null> => {
+): Promise<DetailedSummary> => {
   if (!getApiKey()) {
     return {
       summary: `Feedback received: "${subject}". ${images?.length ? `Includes ${images.length} screenshot(s).` : ''} Please configure CHUTES_API_KEY for AI analysis.`,
