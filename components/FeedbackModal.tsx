@@ -60,8 +60,12 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [aiAnalysisPending, setAiAnalysisPending] = useState(false);
   const [showAppliedMessage, setShowAppliedMessage] = useState(false);
+  const [showAIAnalysisPanel, setShowAIAnalysisPanel] = useState(false);
+  const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(true);
+  const [autoAnalysisDebounced, setAutoAnalysisDebounced] = useState(false);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const autoAnalysisTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Cleanup progress interval on unmount
@@ -72,6 +76,9 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
       }
       if (timeIntervalRef.current) {
         clearInterval(timeIntervalRef.current);
+      }
+      if (autoAnalysisTimeoutRef.current) {
+        clearTimeout(autoAnalysisTimeoutRef.current);
       }
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -85,15 +92,15 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
-      
+
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
-      
+
       oscillator.frequency.value = 800;
       oscillator.type = 'sine';
       gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-      
+
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.5);
     }
@@ -168,6 +175,8 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
       setProgress(0);
       setAiAnalysisPending(false);
       setShowAppliedMessage(false);
+      setShowAIAnalysisPanel(false);
+      setIsAnalysisExpanded(true);
     }
   }, [feedback]);
 
@@ -184,6 +193,26 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
       document.body.style.overflow = 'unset';
     };
   }, [isOpen, onClose]);
+
+  // Debounced auto-analysis when user edits content
+  useEffect(() => {
+    if (isEditing && !isAnalyzing && editedFeedback) {
+      if (autoAnalysisTimeoutRef.current) {
+        clearTimeout(autoAnalysisTimeoutRef.current);
+      }
+
+      autoAnalysisTimeoutRef.current = setTimeout(() => {
+        setAutoAnalysisDebounced(true);
+        handleAIAnalyze();
+      }, 1500);
+    }
+
+    return () => {
+      if (autoAnalysisTimeoutRef.current) {
+        clearTimeout(autoAnalysisTimeoutRef.current);
+      }
+    };
+  }, [editedFeedback?.title, editedFeedback?.description, isEditing]);
 
   if (!isOpen || !feedback || !editedFeedback) return null;
 
@@ -204,6 +233,12 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
     if (window.confirm(t('feedbackModal.confirmDelete'))) {
       onDelete(feedback.id);
     }
+  };
+
+  // Toggle AI Analysis panel
+  const toggleAIAnalysisPanel = () => {
+    setShowAIAnalysisPanel(prev => !prev);
+    setIsAnalysisExpanded(true);
   };
 
   const handleApplyAIChanges = async () => {
@@ -371,21 +406,16 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
             ) : (
               <>
                 <button
-                  onClick={handleAIAnalyze}
-                  disabled={isAnalyzing || !editedFeedback?.title || !editedFeedback?.description}
-                  className="px-4 py-2 bg-purple-50 text-purple-600 rounded-xl text-sm font-bold hover:bg-purple-100 transition-colors flex items-center gap-2 disabled:opacity-50"
+                  onClick={toggleAIAnalysisPanel}
+                  disabled={isAnalyzing}
+                  className={`px-4 py-2 text-sm font-bold rounded-xl transition-colors flex items-center gap-2 ${
+                    showAIAnalysisPanel
+                      ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                      : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
+                  } ${isAnalyzing ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  {isAnalyzing ? (
-                    <>
-                      <i className="fa-solid fa-wand-magic-sparkles animate-pulse"></i>
-                      {t('feedbackForm.analyzing')}
-                    </>
-                  ) : (
-                    <>
-                      <i className="fa-solid fa-wand-magic-sparkles"></i>
-                      {t('aiAnalysis.aiAnalyze')}
-                    </>
-                  )}
+                  <i className={`fa-solid ${showAIAnalysisPanel ? 'fa-wand-magic-sparkles' : 'fa-wand-magic-sparkles'}`}></i>
+                  {showAIAnalysisPanel ? t('common.close') : t('aiAnalysis.aiAnalyze')}
                 </button>
                 <button
                   onClick={() => {
@@ -393,6 +423,7 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
                     setIsEditing(false);
                     setAiSummary(null);
                     setAiAnalysisPending(false);
+                    setShowAIAnalysisPanel(false);
                   }}
                   className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors"
                 >
@@ -510,16 +541,223 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
                 {t('feedbackForm.detailsLabel')}
               </label>
               {isEditing ? (
-                <textarea
-                  value={editedFeedback.description}
-                  onChange={(e) => setEditedFeedback({ ...editedFeedback, description: e.target.value })}
-                  rows={6}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none font-medium resize-none"
-                />
+                <>
+                  <textarea
+                    value={editedFeedback.description}
+                    onChange={(e) => setEditedFeedback({ ...editedFeedback, description: e.target.value })}
+                    rows={6}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none font-medium resize-none"
+                  />
+                  {/* Live Analysis Indicator */}
+                  {isEditing && (
+                    <div className="flex items-center gap-2 mt-2 text-xs text-purple-600 font-medium">
+                      <i className={`fa-solid ${isAnalyzing ? 'fa-spinner fa-spin' : 'fa-wand-magic-sparkles'}`}></i>
+                      <span>
+                        {isAnalyzing
+                          ? t('aiAnalysis.inProgress')
+                          : showAIAnalysisPanel
+                            ? t('aiAnalysis.analysisExpanded')
+                            : t('aiAnalysis.aiAnalyze')}
+                      </span>
+                    </div>
+                  )}
+                </>
               ) : (
                 <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{editedFeedback.description}</p>
               )}
             </div>
+
+            {/* AI Analysis Panel - Only shown in edit mode */}
+            {isEditing && showAIAnalysisPanel && (
+              <div className="bg-gradient-to-br from-purple-50 via-indigo-50 to-purple-50 border-2 border-purple-200 rounded-2xl p-6 animate-in slide-in-from-bottom-4 duration-300">
+                {/* Panel Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                      <i className={`fa-solid ${isAnalyzing ? 'fa-robot fa-spin' : 'fa-wand-magic-sparkles'} text-purple-600 text-lg`}></i>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-purple-900">{t('aiAnalysis.aiAnalyze')}</h3>
+                      <p className="text-xs text-purple-600 font-medium">
+                        {isAnalyzing
+                          ? t('aiAnalysis.analyzingText')
+                          : autoAnalysisDebounced
+                            ? t('aiAnalysis.liveAnalysis')
+                            : t('aiAnalysis.manualAnalysis')}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {/* Refresh Button */}
+                    <button
+                      onClick={handleAIAnalyze}
+                      disabled={isAnalyzing}
+                      className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+                        isAnalyzing
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300'
+                      }`}
+                      title="Refresh AI Analysis"
+                    >
+                      <i className={`fa-solid ${isAnalyzing ? 'fa-spinner fa-spin' : 'fa-rotate'}`}></i>
+                      <span className="hidden sm:inline">{t('common.retry')}</span>
+                    </button>
+                    {/* Collapse/Expand Toggle */}
+                    <button
+                      onClick={() => setIsAnalysisExpanded(!isAnalysisExpanded)}
+                      className={`px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                        isAnalysisExpanded
+                          ? 'bg-white border border-purple-200 text-purple-700 hover:bg-purple-50'
+                          : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                      }`}
+                      title={isAnalysisExpanded ? 'Collapse' : 'Expand'}
+                    >
+                      <i className={`fa-solid ${isAnalysisExpanded ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i>
+                    </button>
+                    {/* Dismiss Button */}
+                    <button
+                      onClick={() => setShowAIAnalysisPanel(false)}
+                      className="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold hover:bg-gray-200 transition-all"
+                      title="Dismiss Analysis Panel"
+                    >
+                      <i className="fa-solid fa-xmark"></i>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Collapsible Content */}
+                {isAnalysisExpanded && (
+                  <div className="space-y-4">
+                    {/* Analysis Progress */}
+                    {isAnalyzing && (
+                      <div className="bg-white/80 border border-purple-100 rounded-xl p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-xs text-purple-700 font-bold uppercase tracking-wider">
+                            <i className="fa-solid fa-spinner fa-spin"></i>
+                            {t('aiAnalysis.inProgress')}
+                          </div>
+                          <span className="text-xs font-black text-purple-600">{Math.round(progress)}%</span>
+                        </div>
+                        {/* Progress Bar */}
+                        <div className="relative h-2 bg-purple-200 rounded-full overflow-hidden">
+                          <div
+                            className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full transition-all duration-300 ease-out"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                        {/* Steps */}
+                        <div className="flex justify-between pt-2">
+                          {ANALYSIS_STEPS.map((step, index) => (
+                            <div
+                              key={step.id}
+                              className={`flex flex-col items-center gap-1 transition-all ${
+                                index <= currentStep ? 'opacity-100' : 'opacity-30'
+                              }`}
+                            >
+                              <div
+                                className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] transition-all ${
+                                  index < currentStep
+                                    ? 'bg-green-500 text-white'
+                                    : index === currentStep
+                                      ? 'bg-purple-600 text-white ring-2 ring-purple-200'
+                                      : 'bg-gray-200 text-gray-400'
+                                }`}
+                              >
+                                {index < currentStep ? (
+                                  <i className="fa-solid fa-check"></i>
+                                ) : (
+                                  <i className={`fa-solid ${step.icon}`}></i>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        {/* Skeleton Loader */}
+                        <div className="space-y-2 pt-2">
+                          <div className="h-2 bg-purple-100 rounded-full animate-pulse" style={{ width: '90%' }} />
+                          <div className="h-2 bg-purple-100 rounded-full animate-pulse" style={{ width: '75%' }} />
+                          <div className="h-2 bg-purple-100 rounded-full animate-pulse" style={{ width: '60%' }} />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Analysis Results */}
+                    {!isAnalyzing && aiSummary && (
+                      <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-3">
+                        <div className="flex items-center gap-2 text-green-700 text-xs font-black uppercase tracking-wider">
+                          <i className={`fa-solid ${showSuccessAnimation ? 'fa-sparkles' : 'fa-check-circle'}`}></i>
+                          {t('aiAnalysis.summaryComplete')}
+                        </div>
+                        <p className="text-sm text-green-900/90 font-medium leading-relaxed">{aiSummary}</p>
+                        <div className="flex items-center gap-2 text-xs text-green-600 font-bold">
+                          <i className="fa-solid fa-lightbulb"></i>
+                          <span>{t('aiAnalysis.analysisEnhanced')}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Analysis Error */}
+                    {!isAnalyzing && analysisError && (
+                      <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <i className="fa-solid fa-exclamation-triangle text-red-600 text-sm"></i>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-bold text-red-900 mb-1">{t('errors.analysisFailed')}</p>
+                            <p className="text-xs text-red-700 font-medium mb-3">{analysisError}</p>
+                            <button
+                              onClick={handleAIAnalyze}
+                              className="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-xs font-bold hover:bg-red-200 transition-colors"
+                            >
+                              <i className="fa-solid fa-rotate mr-1"></i>
+                              {t('common.retry')}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Pending Analysis Indicator */}
+                    {!isAnalyzing && !aiSummary && !analysisError && (
+                      <div className="bg-white/80 border border-purple-100 rounded-xl p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i className="fa-solid fa-wand-magic-sparkles text-purple-600"></i>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-bold text-purple-900 mb-1">{t('aiAnalysis.readyToAnalyze')}</p>
+                            <p className="text-xs text-purple-600 font-medium">
+                              {t('aiAnalysis.analysisDescription')}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-3 pt-3 border-t border-purple-100">
+                          <button
+                            onClick={handleAIAnalyze}
+                            disabled={isAnalyzing}
+                            className="w-full px-4 py-3 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <i className="fa-solid fa-wand-magic-sparkles"></i>
+                            {t('aiAnalysis.startAnalysis')}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Context Info */}
+                    <div className="flex items-center gap-2 text-xs text-purple-500/70 font-medium pt-2 border-t border-purple-200">
+                      <i className="fa-solid fa-info-circle"></i>
+                      <span>
+                        {t('aiAnalysis.contextInfo', {
+                          feedbackId: editedFeedback.id.substring(0, 8)
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Screenshots */}
             {screenshots.length > 0 && (

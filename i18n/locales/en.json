@@ -90,9 +90,16 @@
     "summaryComplete": "AI Summary Complete",
     "aiInsight": "AI Insight",
     "aiAnalyze": "AI Analyze",
+    "analysisExpanded": "Analysis Panel Open",
     "applyAIChanges": "Apply AI Changes",
     "changesApplied": "Changes applied successfully!",
-    "analysisEnhanced": "Title, description, category, and sentiment have been enhanced"
+    "analysisEnhanced": "Title, description, category, and sentiment have been enhanced",
+    "liveAnalysis": "Live analysis active - updates as you edit",
+    "manualAnalysis": "Manual analysis available",
+    "readyToAnalyze": "AI Analysis Ready",
+    "analysisDescription": "AI will analyze this feedback item to provide intelligent insights, suggestions, and automated enhancements to title, description, category, and sentiment.",
+    "startAnalysis": "Start Analysis",
+    "contextInfo": "Analyzing feedback {feedbackId}..."
   },
   "feedbackList": {
     "latestFeedback": "Latest Feedback",

@@ -90,9 +90,16 @@
     "summaryComplete": "Resumen IA Completado",
     "aiInsight": "Perspectiva IA",
     "aiAnalyze": "Analizar con IA",
+    "analysisExpanded": "Panel de Análisis Abierto",
     "applyAIChanges": "Aplicar Cambios IA",
     "changesApplied": "¡Cambios aplicados con éxito!",
-    "analysisEnhanced": "Se han mejorado el título, descripción, categoría y sentimiento"
+    "analysisEnhanced": "Se han mejorado el título, descripción, categoría y sentimiento",
+    "liveAnalysis": "Análisis en vivo activo - actualizaciones mientras editas",
+    "manualAnalysis": "Análisis manual disponible",
+    "readyToAnalyze": "Análisis IA Listo",
+    "analysisDescription": "La IA analizará este comentario para proporcionar perspectivas inteligentes, sugerencias y mejoras automáticas al título, descripción, categoría y sentimiento.",
+    "startAnalysis": "Iniciar Análisis",
+    "contextInfo": "Analizando comentario {feedbackId}..."
   },
   "feedbackList": {
     "latestFeedback": "Últimos Comentarios",

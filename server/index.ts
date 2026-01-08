@@ -48,7 +48,7 @@ const initDb = async () => {
 
     // Add screenshots column if it doesn't exist (migration for existing tables)
     await pool.query(`
-      ALTER TABLE feedback_items 
+      ALTER TABLE feedback_items
       ADD COLUMN IF NOT EXISTS screenshots JSONB DEFAULT '[]'::jsonb
     `);
 
@@ -60,6 +60,40 @@ const initDb = async () => {
         "feedbackId" VARCHAR(36) REFERENCES feedback_items(id) ON DELETE CASCADE,
         "votedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE("userId", "feedbackId")
+      )
+    `);
+
+    // Create audit_findings table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS audit_findings (
+        id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
+        title VARCHAR(255) NOT NULL,
+        description TEXT NOT NULL,
+        "issueType" VARCHAR(50) NOT NULL CHECK ("issueType" IN ('usability', 'accessibility', 'visual_design', 'information_architecture', 'interaction_design')),
+        severity VARCHAR(20) NOT NULL CHECK (severity IN ('critical', 'high', 'medium', 'low')),
+        status VARCHAR(20) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'resolved')),
+        screenshot TEXT,
+        hotspots JSONB DEFAULT '[]'::jsonb,
+        "suggestedImprovement" TEXT,
+        "pageUrl" VARCHAR(500) NOT NULL,
+        browser VARCHAR(100),
+        device VARCHAR(100),
+        "responsiveView" VARCHAR(20) CHECK ("responsiveView" IN ('mobile', 'tablet', 'desktop')),
+        "userPersonas" TEXT[],
+        "wcagReference" VARCHAR(200),
+        "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Create audit_discussions table for threaded comments
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS audit_discussions (
+        id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
+        "auditId" VARCHAR(36) NOT NULL REFERENCES audit_findings(id) ON DELETE CASCADE,
+        author VARCHAR(100) NOT NULL,
+        content TEXT NOT NULL,
+        "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
@@ -277,6 +311,283 @@ app.get('/api/user/votes/:userId', async (req, res) => {
   } catch (error) {
     console.error('Error fetching user votes:', error);
     res.status(500).json({ error: 'Failed to fetch user votes' });
+  }
+});
+
+// === AUDIT FINDINGS API ===
+
+// Get all audit findings with filters
+app.get('/api/audits', async (req, res) => {
+  try {
+    const { issueType, severity, status, search, page = 1, limit = 20 } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
+    let query = 'SELECT * FROM audit_findings';
+    const params: any[] = [];
+    const conditions: string[] = [];
+
+    if (issueType && issueType !== 'all') {
+      conditions.push('"issueType" = $' + (params.length + 1));
+      params.push(issueType);
+    }
+
+    if (severity && severity !== 'all') {
+      conditions.push('severity = $' + (params.length + 1));
+      params.push(severity);
+    }
+
+    if (status && status !== 'all') {
+      conditions.push('status = $' + (params.length + 1));
+      params.push(status);
+    }
+
+    if (search) {
+      const paramIndex = params.length + 1;
+      conditions.push(`(title ILIKE $${paramIndex} OR description ILIKE $${paramIndex + 1} OR "pageUrl" ILIKE $${paramIndex + 2})`);
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    query += ' ORDER BY CASE ' +
+      'WHEN severity = \'critical\' THEN 1 ' +
+      'WHEN severity = \'high\' THEN 2 ' +
+      'WHEN severity = \'medium\' THEN 3 ' +
+      'WHEN severity = \'low\' THEN 4 ' +
+      'END, "createdAt" DESC';
+
+    query += ' LIMIT $' + (params.length + 1) + ' OFFSET $' + (params.length + 2);
+    params.push(Number(limit), offset);
+
+    const result = await pool.query(query, params);
+
+    // Get total count for pagination
+    let countQuery = 'SELECT COUNT(*) FROM audit_findings';
+    if (conditions.length > 0) {
+      countQuery += ' WHERE ' + conditions.join(' AND ');
+    }
+    const countParams = params.slice(0, -2); // Remove limit and offset
+    const countResult = await pool.query(countQuery, countParams);
+
+    res.json({
+      findings: result.rows,
+      total: Number(countResult.rows[0].count),
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(Number(countResult.rows[0].count) / Number(limit))
+    });
+  } catch (error) {
+    console.error('Error fetching audit findings:', error);
+    res.status(500).json({ error: 'Failed to fetch audit findings' });
+  }
+});
+
+// Get audit metrics for dashboard
+app.get('/api/audits/metrics', async (req, res) => {
+  try {
+    const [byType, bySeverity, byStatus, byPage] = await Promise.all([
+      pool.query('SELECT "issueType", COUNT(*) as count FROM audit_findings GROUP BY "issueType"'),
+      pool.query('SELECT severity, COUNT(*) as count FROM audit_findings GROUP BY severity'),
+      pool.query('SELECT status, COUNT(*) as count FROM audit_findings GROUP BY status'),
+      pool.query('SELECT "pageUrl", COUNT(*) as count FROM audit_findings GROUP BY "pageUrl" ORDER BY count DESC LIMIT 10')
+    ]);
+
+    const severityOrder = ['critical', 'high', 'medium', 'low'];
+    const severityMap = new Map(bySeverity.rows.map((r: any) => [r.severity, Number(r.count)]));
+
+    res.json({
+      byIssueType: byType.rows.map((r: any) => ({ issueType: r.issueType, count: Number(r.count) })),
+      bySeverity: severityOrder.map(severity => ({
+        severity,
+        count: severityMap.get(severity) || 0
+      })),
+      byStatus: byStatus.rows.map((r: any) => ({ status: r.status, count: Number(r.count) })),
+      byPage: byPage.rows.map((r: any) => ({ pageUrl: r.pageUrl, count: Number(r.count) }))
+    });
+  } catch (error) {
+    console.error('Error fetching audit metrics:', error);
+    res.status(500).json({ error: 'Failed to fetch audit metrics' });
+  }
+});
+
+// Get single audit finding with discussions
+app.get('/api/audits/:id', async (req, res) => {
+  try {
+    const findingResult = await pool.query('SELECT * FROM audit_findings WHERE id = $1', [req.params.id]);
+    if (findingResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Audit finding not found' });
+    }
+
+    const discussionsResult = await pool.query(
+      'SELECT * FROM audit_discussions WHERE "auditId" = $1 ORDER BY "createdAt" ASC',
+      [req.params.id]
+    );
+
+    res.json({
+      finding: findingResult.rows[0],
+      discussions: discussionsResult.rows
+    });
+  } catch (error) {
+    console.error('Error fetching audit finding:', error);
+    res.status(500).json({ error: 'Failed to fetch audit finding' });
+  }
+});
+
+// Create audit finding
+app.post('/api/audits', async (req, res) => {
+  try {
+    const {
+      title,
+      description,
+      issueType,
+      severity,
+      status = 'open',
+      screenshot,
+      hotspots,
+      suggestedImprovement,
+      pageUrl,
+      browser,
+      device,
+      responsiveView,
+      userPersonas,
+      wcagReference
+    } = req.body;
+
+    const id = Math.random().toString(36).substr(2, 9);
+
+    const result = await pool.query(
+      `INSERT INTO audit_findings (
+        id, title, description, "issueType", severity, status,
+        screenshot, hotspots, "suggestedImprovement", "pageUrl",
+        browser, device, "responsiveView", "userPersonas", "wcagReference", "createdAt", "updatedAt"
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+       RETURNING *`,
+      [
+        id,
+        title,
+        description,
+        issueType,
+        severity,
+        status,
+        screenshot || null,
+        JSON.stringify(hotspots || []),
+        suggestedImprovement || null,
+        pageUrl,
+        browser || null,
+        device || null,
+        responsiveView || null,
+        userPersonas || [],
+        wcagReference || null
+      ]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error creating audit finding:', error);
+    res.status(500).json({ error: 'Failed to create audit finding' });
+  }
+});
+
+// Update audit finding
+app.put('/api/audits/:id', async (req, res) => {
+  try {
+    const {
+      title,
+      description,
+      issueType,
+      severity,
+      status,
+      screenshot,
+      hotspots,
+      suggestedImprovement,
+      pageUrl,
+      browser,
+      device,
+      responsiveView,
+      userPersonas,
+      wcagReference
+    } = req.body;
+
+    const result = await pool.query(
+      `UPDATE audit_findings
+       SET title = $1, description = $2, "issueType" = $3, severity = $4, status = $5,
+           screenshot = $6, hotspots = $7, "suggestedImprovement" = $8, "pageUrl" = $9,
+           browser = $10, device = $11, "responsiveView" = $12, "userPersonas" = $13, "wcagReference" = $14, "updatedAt" = CURRENT_TIMESTAMP
+       WHERE id = $15
+       RETURNING *`,
+      [
+        title,
+        description,
+        issueType,
+        severity,
+        status,
+        screenshot || null,
+        JSON.stringify(hotspots || []),
+        suggestedImprovement || null,
+        pageUrl,
+        browser || null,
+        device || null,
+        responsiveView || null,
+        userPersonas || [],
+        wcagReference || null,
+        req.params.id
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Audit finding not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating audit finding:', error);
+    res.status(500).json({ error: 'Failed to update audit finding' });
+  }
+});
+
+// Delete audit finding
+app.delete('/api/audits/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM audit_findings WHERE id = $1', [req.params.id]);
+    res.json({ message: 'Audit finding deleted' });
+  } catch (error) {
+    console.error('Error deleting audit finding:', error);
+    res.status(500).json({ error: 'Failed to delete audit finding' });
+  }
+});
+
+// Add comment to audit discussion
+app.post('/api/audits/:id/discussions', async (req, res) => {
+  try {
+    const { author, content } = req.body;
+    const id = Math.random().toString(36).substr(2, 9);
+
+    const result = await pool.query(
+      `INSERT INTO audit_discussions (id, "auditId", author, content, "createdAt")
+       VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+       RETURNING *`,
+      [id, req.params.id, author, content]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error adding discussion comment:', error);
+    res.status(500).json({ error: 'Failed to add comment' });
+  }
+});
+
+// Delete discussion comment
+app.delete('/api/audits/:auditId/discussions/:commentId', async (req, res) => {
+  try {
+    await pool.query(
+      'DELETE FROM audit_discussions WHERE id = $1 AND "auditId" = $2',
+      [req.params.commentId, req.params.auditId]
+    );
+    res.json({ message: 'Comment deleted' });
+  } catch (error) {
+    console.error('Error deleting comment:', error);
+    res.status(500).json({ error: 'Failed to delete comment' });
   }
 });
 

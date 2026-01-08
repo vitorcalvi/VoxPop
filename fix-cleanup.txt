@@ -1,0 +1,14 @@
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+      if (timeIntervalRef.current) {
+        clearInterval(timeIntervalRef.current);
+      }
+      if (autoAnalysisTimeoutRef.current) {
+        clearTimeout(autoAnalysisTimeoutRef.current);
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };

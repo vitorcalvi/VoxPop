@@ -1,0 +1,12 @@
+// Helper to fix braces
+// Lines that need fixing:
+// 226: if (isEditing && !isAnalyzing && editedFeedback) {
+// 227: if (autoAnalysisTimeoutRef.current) {
+// 229: }
+// 231: needs closing brace for line 226-230, then setTimeout assignment
+// 235: }
+ (closes first if)
+// 237: return () => {
+// 238: if (autoAnalysisTimeoutRef.current) {
+// 240: }
+// 241: }; (closes return function)
