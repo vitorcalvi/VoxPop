@@ -50,7 +50,8 @@ export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote, onCl
         </html>
       `);
     }
-  
+  };
+
   const openGallery = () => {
     const w = window.open('', '_blank');
     if (w) {
@@ -197,4 +198,5 @@ export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote, onCl
         </div>
       </div>
     </div>
-  };
+  );
+};
