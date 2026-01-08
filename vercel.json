@@ -4,8 +4,7 @@
     "api/**/*.ts": {
       "maxDuration": 60,
       "includeFiles": "services/**",
-      "memory": 512,
-      "runtime": "nodejs20.x"
+      "memory": 512
     }
   },
   "routes": [
