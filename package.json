@@ -21,6 +21,7 @@
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
     "@vercel/node": "^3.2.12",
+    "@vercel/og": "^0.6.4",
     "axios": "^1.13.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
