@@ -648,14 +648,14 @@ app.delete('/api/audits/:auditId/discussions/:commentId', async (req, res) => {
 // Comprehensive AI Analysis Endpoint (Chutes Plus)
 app.post('/api/ai/comprehensive-analyze', async (req, res) => {
   try {
-    const { subject, details, images } = req.body;
+    const { subject, details, images, language } = req.body;
 
     if (!subject || !details) {
       return res.status(400).json({ error: 'Subject and details are required' });
     }
 
     // Use Chutes Plus AI for comprehensive analysis
-    const result = await comprehensiveAnalyze(subject, details, images);
+    const result = await comprehensiveAnalyze(subject, details, images, language);
 
     if (!result) {
       return res.status(500).json({ error: 'AI analysis failed' });

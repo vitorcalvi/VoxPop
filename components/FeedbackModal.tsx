@@ -13,7 +13,7 @@ interface Props {
 const getApiBase = () => '/api';
 
 export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSave, onDelete }) => {
-  const { t, formatDate } = useI18n();
+  const { t, formatDate, language } = useI18n();
 
   // Analysis steps for progress tracking
   const ANALYSIS_STEPS = [
@@ -276,7 +276,8 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
         body: JSON.stringify({
           subject: editedFeedback.title,
           details: editedFeedback.description,
-          images: screenshots
+          images: screenshots,
+          language: language
         }),
         signal: abortControllerRef.current?.signal
       });

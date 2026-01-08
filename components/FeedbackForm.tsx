@@ -9,7 +9,7 @@ interface Props {
 }
 
 export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [screenshots, setScreenshots] = useState<string[]>([]);
@@ -329,7 +329,8 @@ export const FeedbackForm: React.FC<Props> = ({ onAdd }) => {
     const payload = {
       subject: title,
       details: description,
-      images: screenshots
+      images: screenshots,
+      language: language
     };
 
     const payloadSize = calculatePayloadSize(payload);

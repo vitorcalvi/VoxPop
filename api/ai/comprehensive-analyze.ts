@@ -18,7 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     console.log('📝 comprehensive-analyze request received');
-    const { subject, details, images } = req.body;
+    const { subject, details, images, language } = req.body;
 
     // Calculate and log payload size for debugging
     const payloadSize = JSON.stringify(req.body).length;
@@ -30,6 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log('📦 Request data:', {
       subject,
       details: details?.substring(0, 100),
+      language,
       imagesCount: images?.length,
       payloadSize: `${payloadSizeMB} MB`,
       imageSizes
@@ -42,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Use Chutes Plus AI for comprehensive analysis
     console.log('🤖 Calling comprehensiveAnalyze...');
-    const result = await comprehensiveAnalyze(subject, details, images);
+    const result = await comprehensiveAnalyze(subject, details, images, language);
 
     console.log('✅ Sending successful response');
     return res.status(200).json(result);

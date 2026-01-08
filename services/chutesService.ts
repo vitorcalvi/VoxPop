@@ -2,6 +2,17 @@
 // API Documentation: https://chutes.ai/docs
 // Multi-Model Strategy for Optimal Feedback Analysis
 
+const LANGUAGE_NAMES: Record<string, string> = {
+  'en': 'English',
+  'es': 'Spanish',
+  'pt': 'Portuguese'
+};
+
+const getLanguageInstruction = (language: string = 'en'): string => {
+  const langName = LANGUAGE_NAMES[language] || 'English';
+  return `You MUST respond in ${langName}. All output including category names, insights, and any text must be in ${langName}.`;
+};
+
 export interface AIAnalysisResult {
   category: string;
   sentiment: 'positive' | 'neutral' | 'negative';
@@ -131,9 +142,14 @@ const parseJSONResponse = <T>(content: string): T | null => {
 export const analyzeFeedback = async (
   title: string,
   description: string,
-  screenshotBase64?: string
+  screenshotBase64?: string,
+  language: string = 'en'
 ): Promise<AIAnalysisResult | null> => {
-  const systemPrompt = `You are an expert AI feedback analyst. Analyze the user feedback thoroughly and provide a detailed, structured analysis.
+  const languageInstruction = getLanguageInstruction(language);
+
+  const systemPrompt = `You are an expert AI feedback analyst. Analyze user feedback thoroughly and provide a detailed, structured analysis.
+
+${languageInstruction}
 
 You MUST respond with ONLY a valid JSON object (no markdown, no explanation) in this exact format:
 {
@@ -180,7 +196,10 @@ Provide a comprehensive analysis. Respond with ONLY the JSON object.`;
 };
 
 // Generate detailed roadmap with reasoning model
-export const generateRoadmapSummary = async (feedbacks: any[]): Promise<string> => {
+export const generateRoadmapSummary = async (
+  feedbacks: any[],
+  language: string = 'en'
+): Promise<string> => {
   if (!getApiKey()) {
     return 'AI roadmap generation requires CHUTES_API_KEY. Please configure your Chutes Plus API key.';
   }
@@ -189,11 +208,15 @@ export const generateRoadmapSummary = async (feedbacks: any[]): Promise<string> 
     return 'No feedback items to analyze for roadmap generation.';
   }
 
+  const languageInstruction = getLanguageInstruction(language);
+
   const feedbackSummary = feedbacks.slice(0, 25).map((f, i) =>
     `${i + 1}. [${f.category}] "${f.title}" - ${f.votes} votes, ${f.sentiment || 'neutral'} sentiment${f.aiInsight ? ` | Insight: ${f.aiInsight.substring(0, 100)}` : ''}`
   ).join('\n');
 
   const systemPrompt = `You are a senior product strategist AI. Analyze the community feedback and create a comprehensive, prioritized product roadmap.
+
+${languageInstruction}
 
 Structure your response as:
 1. Executive Summary (2-3 sentences)
@@ -235,14 +258,19 @@ export const listChutes = async () => {
 };
 
 export const analyzeImagesToFeedback = async (
-  imagesBase64: string[]
+  imagesBase64: string[],
+  language: string = 'en'
 ): Promise<ImageAnalysisResult | null> => {
   if (!getApiKey()) {
     return null;
   }
 
+  const languageInstruction = getLanguageInstruction(language);
+
   // Use vision model for image analysis
-  const systemPrompt = `You are an AI specialized in analyzing screenshots and visual feedback. Examine the provided screenshot(s) and generate structured feedback.
+  const systemPrompt = `You are an AI specialized in analyzing screenshots and visual feedback. Examine of provided screenshot(s) and generate structured feedback.
+
+${languageInstruction}
 
 You MUST respond with ONLY a valid JSON object:
 {
@@ -289,7 +317,8 @@ You MUST respond with ONLY a valid JSON object:
 export const comprehensiveAnalyze = async (
   subject: string,
   details: string,
-  images?: string[]
+  images?: string[],
+  language: string = 'en'
 ): Promise<DetailedSummary> => {
   if (!getApiKey()) {
     return {
@@ -306,7 +335,11 @@ export const comprehensiveAnalyze = async (
     };
   }
 
+  const languageInstruction = getLanguageInstruction(language);
+
   const systemPrompt = `You are a senior software quality analyst and product expert. Analyze the user's feedback comprehensively and provide a detailed, actionable report.
+
+${languageInstruction}
 
 You MUST respond with ONLY a valid JSON object (no markdown outside JSON, no explanation before/after):
 {

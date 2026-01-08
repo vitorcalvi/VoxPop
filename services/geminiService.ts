@@ -3,16 +3,38 @@ import { FeedbackItem, AIAnalysisResult } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
+const LANGUAGE_NAMES: Record<string, string> = {
+  'en': 'English',
+  'es': 'Spanish',
+  'pt': 'Portuguese'
+};
+
+const getLanguageInstruction = (language: string = 'en'): string => {
+  const langName = LANGUAGE_NAMES[language] || 'English';
+  return `You MUST respond in ${langName}. All output including category names, insights, and any text must be in ${langName}.`;
+};
+
 /**
  * Uses Gemini to analyze feedback text and screenshots.
  */
-export const analyzeFeedback = async (title: string, description: string, screenshotBase64?: string): Promise<AIAnalysisResult | null> => {
+export const analyzeFeedback = async (
+  title: string,
+  description: string,
+  screenshotBase64?: string,
+  language: string = 'en'
+): Promise<AIAnalysisResult | null> => {
   try {
+    const languageInstruction = getLanguageInstruction(language);
+
     const parts: any[] = [
-      { text: `Analyze this customer feedback and categorize it accurately. 
-      Examine the screenshot if provided to find visual bugs or UI issues.
-      Title: ${title}
-      Description: ${description}` }
+      {
+        text: `${languageInstruction}
+
+Analyze this customer feedback and categorize it accurately.
+Examine screenshot if provided to find visual bugs or UI issues.
+Title: ${title}
+Description: ${description}`
+      }
     ];
 
     if (screenshotBase64) {
@@ -59,16 +81,26 @@ export const analyzeFeedback = async (title: string, description: string, screen
 /**
  * Summarizes feedback items into a high-level roadmap.
  */
-export const generateRoadmapSummary = async (feedbacks: FeedbackItem[]): Promise<string> => {
+export const generateRoadmapSummary = async (
+  feedbacks: FeedbackItem[],
+  language: string = 'en'
+): Promise<string> => {
   const content = feedbacks.map(f => `- [${f.category}] ${f.title}: ${f.description}`).join('\n');
-  
+  const languageInstruction = getLanguageInstruction(language);
+
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: { parts: [{ text: `Act as a senior product manager. Based on this feedback, generate a brief, professional roadmap summary with key themes and prioritization. Do not use Markdown formatting like bolding or headers, just plain text with bullets.
-      
-      Feedback:
-      ${content}` }] },
+      contents: {
+        parts: [{
+          text: `${languageInstruction}
+
+Act as a senior product manager. Based on this feedback, generate a brief, professional roadmap summary with key themes and prioritization. Do not use Markdown formatting like bolding or headers, just plain text with bullets.
+
+Feedback:
+${content}`
+        }]
+      },
     });
 
     return response.text || "No summary generated.";
