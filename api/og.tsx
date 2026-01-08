@@ -41,7 +41,7 @@ export default async function handler(req: Request) {
           >
             💬
           </div>
-          
+
           {/* Title */}
           <h1
             style={{
@@ -54,7 +54,7 @@ export default async function handler(req: Request) {
           >
             VoxPop
           </h1>
-          
+
           {/* Subtitle */}
           <p
             style={{
