@@ -1,0 +1,25 @@
+# Dependencies and build artifacts
+node_modules
+.git
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist
+.vercel
+
+# Editor and IDE files
+.vscode
+.idea
+.DS_Store
+
+# Logs and debugging
+*.log
+npm-debug.log
+
+# Testing
+coverage
+.nyc_output

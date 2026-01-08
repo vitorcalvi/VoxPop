@@ -1,4 +1,4 @@
-# VoxPop Authentication System
+# Feedback Authentication System
 
 Secure GitHub OAuth 2.0 authentication with role-based access control.
 

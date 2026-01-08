@@ -1,9 +1,10 @@
-# Vercel Deployment Guide for VoxPop
+# Vercel Deployment Guide for Feedback
 
 ## Prerequisites
 
 - Vercel account ([vercel.com](https://vercel.com))
-- GitHub repository with VoxPop code
+- GitHub repository with Feedback code
+- Node.js 18+ (engines field ensures compatibility)
 - Neon PostgreSQL database ([neon.tech](https://neon.tech))
 
 ## Step 1: Prepare Environment Variables
@@ -19,11 +20,57 @@ Set these environment variables in your project:
 ```bash
 # Install Vercel CLI
 npm i -g vercel
+```
 
-# Login to Vercel
+### Important: Fix for "Runtimes must have a valid version" Error
+
+If you encounter error: `Runtimes must have a valid version, for example now-php@1.0.0`, follow these steps:
+
+1. **Clear Vercel CLI cache** (removes stale configuration):
+```bash
+rm -rf ~/.vercel
+rm -rf .vercel
+```
+
+2. **Reinstall Vercel CLI** (ensures latest version):
+```bash
+npm uninstall -g vercel
+npm install -g vercel
+```
+
+3. **Login to Vercel**
+```bash
 vercel login
+```
 
-# Deploy
+4. **Deploy**
+```bash
+vercel
+```
+
+### Important: Fix for "Runtimes must have a valid version" Error
+
+If you encounter error: `Runtimes must have a valid version, for example now-php@1.0.0`, follow these steps:
+
+1. **Clear Vercel CLI cache** (removes stale configuration):
+```bash
+rm -rf ~/.vercel
+rm -rf .vercel
+```
+
+2. **Reinstall Vercel CLI** (ensures latest version):
+```bash
+npm uninstall -g vercel
+npm install -g vercel
+```
+
+3. **Login to Vercel**
+```bash
+vercel login
+```
+
+4. **Deploy**
+```bash
 vercel
 ```
 
@@ -39,13 +86,39 @@ vercel
 
 Add these in Vercel dashboard (Project Settings → Environment Variables):
 
-|| Variable | Value | Environment |
-||----------|--------|-------------|
-|| `DATABASE_URL` | Your Neon connection string | Production, Preview, Development |
+| Variable | Value | Environment |
+|----------|-------|-------------|
+| `DATABASE_URL` | Your Neon connection string | Production, Preview, Development |
 
 |**Important:** Add `DATABASE_URL` from Neon's connection string format:
 ```
-postgresql://username:password@ep-xxx.region.aws.neon.tech/neondb?sslmode=require
+postgresql://username:password@ep-host-name-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require
+```
+
+### Important: Fix for "Runtimes must have a valid version" Error
+
+If you encounter error: `Runtimes must have a valid version, for example now-php@1.0.0`, follow these steps:
+
+1. **Clear Vercel CLI cache** (removes stale configuration):
+```bash
+rm -rf ~/.vercel
+rm -rf .vercel
+```
+
+2. **Reinstall Vercel CLI** (ensures latest version):
+```bash
+npm uninstall -g vercel
+npm install -g vercel
+```
+
+3. **Login to Vercel**
+```bash
+vercel login
+```
+
+4. **Deploy**
+```bash
+vercel
 ```
 
 ## Step 4: Verify Deployment

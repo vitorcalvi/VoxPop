@@ -197,5 +197,4 @@ export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote, onCl
         </div>
       </div>
     </div>
-  );
-};
+  };
