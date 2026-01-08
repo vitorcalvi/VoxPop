@@ -25,7 +25,7 @@
   "sidebar": {
     "filterByCategory": "Filter by Category",
     "allFeedback": "All Feedback",
-    "multimodalAI": "Multimodal AI",
+    "multimodalAI": "About",
     "multimodalDescription": "Upload screenshots to help Gemini identify bugs and UI patterns instantly.",
     "multimodalAIDescription": "Share feedback using words, images, or audio—whatever works best for you. Our AI understands different formats together to give you helpful insights.",
     "aiRoadmapVision": "AI Roadmap Vision"

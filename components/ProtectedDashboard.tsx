@@ -68,7 +68,7 @@ export const ProtectedDashboard: React.FC = () => {
   return (
     <div className="dashboard">
       <header className="dashboard-header">
-        <h1>VoxPop Dashboard</h1>
+        <h1>Feedback Dashboard</h1>
         <LoginButton onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} />
       </header>
 

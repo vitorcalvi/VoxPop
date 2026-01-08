@@ -23,7 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ 
       status: 'ok', 
       timestamp: new Date().toISOString(),
-      message: 'VoxPop API is running (Edge)'
+      message: 'Feedback API is running (Edge)'
     });
   }
 
@@ -31,7 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (path === '/api' && req.method === 'GET') {
     return res.status(200).json({
       status: 'ok',
-      message: 'VoxPop Feedback API',
+      message: 'Feedback API',
       endpoints: {
         health: 'GET /api/health',
         feedback: 'GET /api/feedback',

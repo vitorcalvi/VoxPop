@@ -1,10 +1,10 @@
 # AGENTS.md
 
-This document helps AI agents work effectively in the VoxPop codebase.
+This document helps AI agents work effectively in Feedback codebase.
 
 ## Project Overview
 
-VoxPop is an AI-powered feedback management application built with React, TypeScript, Express.js, and PostgreSQL (Neon). It provides real-time database storage with feedback management capabilities.
+Feedback is an AI-powered feedback management application built with React, TypeScript, Express.js, and PostgreSQL (Neon). It provides real-time database storage with feedback management capabilities.
 
 ### Architecture
 - **Frontend**: React 18.3.1 + TypeScript + Vite + Tailwind CSS (CDN)

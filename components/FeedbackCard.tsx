@@ -43,15 +43,14 @@ export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote, onCl
     if (w) {
       w.document.write(`
         <html>
-          <head><title>Screenshot - VoxPop</title></head>
+          <head><title>Screenshot - Feedback</title></head>
           <body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#000;">
             <img src="${screenshot}" style="max-width:100%;max-height:100vh;object-fit:contain;" onclick="window.close()" />
           </body>
         </html>
       `);
     }
-  };
-
+  
   const openGallery = () => {
     const w = window.open('', '_blank');
     if (w) {
@@ -65,7 +64,7 @@ export const FeedbackCard: React.FC<Props> = ({ feedback, hasVoted, onVote, onCl
       w.document.write(`
         <html>
           <head>
-            <title>Screenshots Gallery - VoxPop</title>
+            <title>Screenshots Gallery - Feedback</title>
             <style>
               body { margin: 0; padding: 20px; background: #f5f5f5; font-family: system-ui, sans-serif; }
               .gallery { max-width: 900px; margin: 0 auto; }

@@ -1,13 +1,15 @@
-# VoxPop - AI-Powered Feedback System
+# Feedback - AI-Powered Community Voice
 
-An intelligent feedback management application powered by PostgreSQL with placeholder for future AI integration.
+An intelligent feedback management application powered by AI for community-driven product development.
 
 ## 🚀 Features
 
+- **AI-Powered Analysis**: Automatic sentiment analysis, categorization, and intelligent insights
 - **Feedback Management**: Submit, categorize, and track user feedback
 - **Real-Time Database**: Persistent storage with PostgreSQL (Neon Cloud)
 - **Smart Filtering**: Dynamic category extraction and search functionality
 - **Vote System**: User-agnostic voting with deduplication
+- **Multi-Language Support**: English, Spanish, Portuguese
 - **Responsive Design**: Mobile-first UI with Tailwind CSS
 
 ## 🏗️ Architecture
@@ -39,12 +41,16 @@ An intelligent feedback management application powered by PostgreSQL with placeh
 - **PostgreSQL** - Primary database
 - **Neon Cloud** - Managed PostgreSQL hosting
 
+### AI Services
+- **Chutes Plus AI** - Comprehensive feedback analysis
+- **Google Gemini** - Alternative AI provider
+
 ## 📦 Installation
 
 ```bash
 # Clone repository
 git clone <repository-url>
-cd VoxPop
+cd Feedback
 
 # Install dependencies
 npm install
@@ -404,10 +410,9 @@ For issues and questions:
 - [ ] Advanced analytics dashboard
 - [ ] Mobile app development
 - [ ] Dark mode support
-- [ ] Internationalization (i18n)
 - [ ] Webhook integrations
 - [ ] Export functionality (CSV, PDF)
 
 ---
 
-**Built with ❤️ using VoxPop**
+**Built with ❤️ using Feedback**

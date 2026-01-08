@@ -25,7 +25,7 @@
   "sidebar": {
     "filterByCategory": "Filtrar por Categoria",
     "allFeedback": "Todos os Feedbacks",
-    "multimodalAI": "IA Multimodal",
+    "multimodalAI": "Sobre",
     "multimodalDescription": "Envie capturas de tela para o Gemini identificar bugs e padrões de UI instantaneamente.",
     "multimodalAIDescription": "Compartilhe feedback usando palavras, imagens ou áudio—o que funciona melhor para você. Nossa IA entende diferentes formatos juntos para dar insights úteis.",
     "aiRoadmapVision": "Visão IA do Roadmap"
