@@ -58,6 +58,8 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [aiAnalysisPending, setAiAnalysisPending] = useState(false);
+  const [showAppliedMessage, setShowAppliedMessage] = useState(false);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -164,6 +166,8 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
       setIsAnalyzing(false);
       setCurrentStep(0);
       setProgress(0);
+      setAiAnalysisPending(false);
+      setShowAppliedMessage(false);
     }
   }, [feedback]);
 
@@ -200,6 +204,14 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
     if (window.confirm(t('feedbackModal.confirmDelete'))) {
       onDelete(feedback.id);
     }
+  };
+
+  const handleApplyAIChanges = async () => {
+    if (!editedFeedback || !aiAnalysisPending) return;
+    await handleSave();
+    setAiAnalysisPending(false);
+    setShowAppliedMessage(true);
+    setTimeout(() => setShowAppliedMessage(false), 3000);
   };
 
   const handleAIAnalyze = async () => {
@@ -253,6 +265,9 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
         sentiment: data.sentiment || editedFeedback.sentiment,
         aiInsight: data.aiInsight || editedFeedback.aiInsight
       });
+
+      // Mark that there are pending AI changes
+      setAiAnalysisPending(true);
     } catch (error) {
       console.error('AI analysis error:', error);
       stopProgressSimulation();
@@ -297,30 +312,61 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
           <div className="flex items-center gap-2">
             {!isEditing ? (
               <>
-                <button
-                  onClick={handleAIAnalyze}
-                  disabled={isAnalyzing}
-                  className="px-4 py-2 bg-purple-50 text-purple-600 rounded-xl text-sm font-bold hover:bg-purple-100 transition-colors flex items-center gap-2 disabled:opacity-50"
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <i className="fa-solid fa-wand-magic-sparkles animate-pulse"></i>
-                      {t('feedbackForm.analyzing')}
-                    </>
-                  ) : (
-                    <>
-                      <i className="fa-solid fa-wand-magic-sparkles"></i>
-                      {t('aiAnalysis.aiAnalyze')}
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-sm font-bold hover:bg-indigo-100 transition-colors flex items-center gap-2"
-                >
-                  <i className="fa-solid fa-pen"></i>
-                  {t('common.edit')}
-                </button>
+                {aiAnalysisPending ? (
+                  <>
+                    <button
+                      onClick={handleApplyAIChanges}
+                      disabled={isSaving}
+                      className="px-4 py-2 bg-green-500 text-white rounded-xl text-sm font-bold hover:bg-green-600 transition-colors flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {isSaving ? (
+                        <>
+                          <i className="fa-solid fa-spinner animate-spin"></i>
+                          {t('common.save')}
+                        </>
+                      ) : (
+                        <>
+                          <i className="fa-solid fa-check-circle"></i>
+                          {t('aiAnalysis.applyAIChanges')}
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-sm font-bold hover:bg-indigo-100 transition-colors flex items-center gap-2"
+                    >
+                      <i className="fa-solid fa-pen"></i>
+                      {t('common.edit')}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleAIAnalyze}
+                      disabled={isAnalyzing}
+                      className="px-4 py-2 bg-purple-50 text-purple-600 rounded-xl text-sm font-bold hover:bg-purple-100 transition-colors flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {isAnalyzing ? (
+                        <>
+                          <i className="fa-solid fa-wand-magic-sparkles animate-pulse"></i>
+                          {t('feedbackForm.analyzing')}
+                        </>
+                      ) : (
+                        <>
+                          <i className="fa-solid fa-wand-magic-sparkles"></i>
+                          {t('aiAnalysis.aiAnalyze')}
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-sm font-bold hover:bg-indigo-100 transition-colors flex items-center gap-2"
+                    >
+                      <i className="fa-solid fa-pen"></i>
+                      {t('common.edit')}
+                    </button>
+                  </>
+                )}
               </>
             ) : (
               <>
@@ -346,6 +392,7 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
                     setEditedFeedback({ ...feedback });
                     setIsEditing(false);
                     setAiSummary(null);
+                    setAiAnalysisPending(false);
                   }}
                   className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors"
                 >
@@ -655,6 +702,16 @@ export const FeedbackModal: React.FC<Props> = ({ feedback, isOpen, onClose, onSa
                   <i className="fa-solid fa-check-circle mr-1"></i>
                   {t('aiAnalysis.analysisEnhanced')}
                 </p>
+              </div>
+            )}
+
+            {/* Changes Applied Success Message */}
+            {showAppliedMessage && (
+              <div className="bg-green-100 border-l-4 border-green-600 p-4 rounded-r-xl animate-in fade-in duration-300">
+                <div className="flex items-center gap-2 text-green-800 text-sm font-bold">
+                  <i className="fa-solid fa-check-circle"></i>
+                  {t('aiAnalysis.changesApplied')}
+                </div>
               </div>
             )}
 

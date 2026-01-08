@@ -149,6 +149,8 @@ export interface TranslationKeys {
     summaryComplete: string;
     aiInsight: string;
     aiAnalyze: string;
+    applyAIChanges: string;
+    changesApplied: string;
     analysisEnhanced: string;
   };
 

@@ -90,6 +90,8 @@
     "summaryComplete": "Resumen IA Completado",
     "aiInsight": "Perspectiva IA",
     "aiAnalyze": "Analizar con IA",
+    "applyAIChanges": "Aplicar Cambios IA",
+    "changesApplied": "¡Cambios aplicados con éxito!",
     "analysisEnhanced": "Se han mejorado el título, descripción, categoría y sentimiento"
   },
   "feedbackList": {

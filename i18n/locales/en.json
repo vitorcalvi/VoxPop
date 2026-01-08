@@ -90,6 +90,8 @@
     "summaryComplete": "AI Summary Complete",
     "aiInsight": "AI Insight",
     "aiAnalyze": "AI Analyze",
+    "applyAIChanges": "Apply AI Changes",
+    "changesApplied": "Changes applied successfully!",
     "analysisEnhanced": "Title, description, category, and sentiment have been enhanced"
   },
   "feedbackList": {
