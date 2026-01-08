@@ -5,7 +5,7 @@ export const config = {
   runtime: 'edge',
 };
 
-export default async function handler() {
+export default async function handler(req: Request) {
   return new ImageResponse(
     (
       <div
@@ -164,11 +164,6 @@ export default async function handler() {
     {
       width: 1200,
       height: 630,
-      // Ensure proper MIME type
-      headers: {
-        'Content-Type': 'image/png',
-        'Cache-Control': 'public, max-age=0, s-maxage=3600',
-      },
     }
   );
 }
