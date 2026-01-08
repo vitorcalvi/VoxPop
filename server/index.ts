@@ -110,6 +110,38 @@ app.get('/api/health', async (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Debug endpoint for database diagnostics
+app.get('/api/debug', async (req, res) => {
+  try {
+    const dbTest = await pool.query('SELECT NOW() as time');
+    const feedbackCount = await pool.query('SELECT COUNT(*) as count FROM feedback_items');
+    const votesCount = await pool.query('SELECT COUNT(*) as count FROM user_votes');
+
+    // Check table schema
+    const tableInfo = await pool.query(`
+      SELECT column_name, data_type, is_nullable, column_default
+      FROM information_schema.columns
+      WHERE table_name = 'user_votes'
+      ORDER BY ordinal_position
+    `);
+
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      database: {
+        connected: true,
+        time: dbTest.rows[0].time,
+        feedbackCount: feedbackCount.rows[0].count,
+        votesCount: votesCount.rows[0].count
+      },
+      userVotesSchema: tableInfo.rows
+    });
+  } catch (error: unknown) {
+    const err = error as Error;
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // AI Model Configuration
 app.get('/api/ai/models', async (req, res) => {
   res.json(getModelConfig());
@@ -223,12 +255,32 @@ app.put('/api/feedback/:id', async (req, res) => {
 // Vote on feedback
 app.post('/api/feedback/:id/vote', async (req, res) => {
   try {
-    const { userId, vote } = req.body; // vote: true (upvote) or false (toggle off)
-    
+    const { userId, vote } = req.body || {}; // vote: true (upvote) or false (toggle off)
+    const feedbackId = req.params.id;
+
+    // Validate required fields
+    if (!feedbackId) {
+      return res.status(400).json({ error: 'Missing feedback ID' });
+    }
+
+    if (!userId || typeof userId !== 'string') {
+      return res.status(400).json({ error: 'Missing or invalid userId' });
+    }
+
+    // Verify feedback item exists before processing vote
+    const feedbackCheck = await pool.query(
+      'SELECT id FROM feedback_items WHERE id = $1',
+      [feedbackId]
+    );
+
+    if (feedbackCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Feedback item not found', feedbackId });
+    }
+
     // Check if user already voted
     const existingVote = await pool.query(
       'SELECT * FROM user_votes WHERE "userId" = $1 AND "feedbackId" = $2',
-      [userId, req.params.id]
+      [userId, feedbackId]
     );
 
     if (existingVote.rows.length > 0) {
@@ -240,27 +292,29 @@ app.post('/api/feedback/:id/vote', async (req, res) => {
       // Decrement votes when removing
       await pool.query(
         'UPDATE feedback_items SET votes = votes - 1 WHERE id = $1',
-        [req.params.id]
+        [feedbackId]
       );
     } else if (vote) {
       // User hasn't voted and wants to upvote - add the vote
+      const voteId = Math.random().toString(36).substring(2, 11);
       await pool.query(
-        'INSERT INTO user_votes ("userId", "feedbackId") VALUES ($1, $2)',
-        [userId, req.params.id]
+        'INSERT INTO user_votes (id, "userId", "feedbackId") VALUES ($1, $2, $3)',
+        [voteId, userId, feedbackId]
       );
       // Increment votes when adding
       await pool.query(
         'UPDATE feedback_items SET votes = votes + 1 WHERE id = $1',
-        [req.params.id]
+        [feedbackId]
       );
     }
     // If vote is false and user hasn't voted, do nothing
 
-    const result = await pool.query('SELECT * FROM feedback_items WHERE id = $1', [req.params.id]);
+    const result = await pool.query('SELECT * FROM feedback_items WHERE id = $1', [feedbackId]);
     res.json(result.rows[0]);
-  } catch (error) {
-    console.error('Error voting:', error);
-    res.status(500).json({ error: 'Failed to vote' });
+  } catch (error: unknown) {
+    const err = error as Error & { code?: string };
+    console.error('Error voting:', { message: err.message, code: err.code });
+    res.status(500).json({ error: 'Failed to vote', code: err.code });
   }
 });
 

@@ -1,5 +1,11 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { Pool } from 'pg';
 import { getModelConfig } from './_chutesService.js';
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
@@ -42,6 +48,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (process.env.CHUTES_API_KEY) {
     const key = process.env.CHUTES_API_KEY;
     diagnostics.tests.apiKeyFormat = key.startsWith('cpk_') ? '✅ Valid format (cpk_...)' : `⚠️ Unexpected format: ${key.substring(0, 5)}...`;
+  }
+
+  // Test 4: Database connectivity
+  try {
+    const result = await pool.query('SELECT NOW() as time, current_database() as db');
+    diagnostics.tests.databaseConnection = '✅ Connected';
+    diagnostics.tests.databaseTime = result.rows[0].time;
+    diagnostics.tests.databaseName = result.rows[0].db;
+  } catch (error) {
+    diagnostics.tests.databaseConnection = `❌ Failed: ${(error as Error).message}`;
+  }
+
+  // Test 5: Check feedback_items table
+  try {
+    const result = await pool.query('SELECT COUNT(*) as count FROM feedback_items');
+    diagnostics.tests.feedbackItemsTable = `✅ Exists (${result.rows[0].count} items)`;
+  } catch (error) {
+    diagnostics.tests.feedbackItemsTable = `❌ Error: ${(error as Error).message}`;
+  }
+
+  // Test 6: Check user_votes table
+  try {
+    const result = await pool.query('SELECT COUNT(*) as count FROM user_votes');
+    diagnostics.tests.userVotesTable = `✅ Exists (${result.rows[0].count} votes)`;
+  } catch (error) {
+    diagnostics.tests.userVotesTable = `❌ Error: ${(error as Error).message}`;
   }
 
   return res.status(200).json(diagnostics);

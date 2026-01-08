@@ -145,7 +145,15 @@ const AppContent: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`Vote failed: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 404) {
+          // Feedback item was deleted - remove from local state
+          setFeedbacks(prev => prev.filter(f => f.id !== id));
+          setVotedIds(prev => prev.filter(vId => vId !== id));
+          setErrorMessage('This feedback no longer exists');
+          return;
+        }
+        throw new Error(errorData.error || `Vote failed: ${response.status}`);
       }
 
       const updated = await response.json();
