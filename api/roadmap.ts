@@ -1,5 +1,21 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { generateRoadmapSummary } from './_chutesService.js';
+import { generateRoadmapSummary } from './_aiService.js';
+
+const isProduction = process.env.NODE_ENV === 'production';
+
+const log = (...args: any[]) => {
+  if (!isProduction) {
+    console.log(...args);
+  }
+};
+
+const logError = (...args: any[]) => {
+  if (isProduction) {
+    console.error(...args);
+  } else {
+    console.error(...args);
+  }
+};
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
@@ -32,12 +48,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Log payload size for monitoring
     const payloadSize = JSON.stringify(req.body).length;
-    console.log(`Roadmap request: ${feedbacks.length} items, ~${(payloadSize / 1024).toFixed(2)} KB`);
+    log(`Roadmap request: ${feedbacks.length} items, ~${(payloadSize / 1024).toFixed(2)} KB`);
 
     const summary = await generateRoadmapSummary(feedbacks);
     return res.status(200).json({ summary });
   } catch (error) {
-    console.error('Roadmap Error:', error);
+    logError('Roadmap Error:', error);
     return res.status(500).json({
       error: 'Failed to generate roadmap',
       details: error instanceof Error ? error.message : 'Unknown error',

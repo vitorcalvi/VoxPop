@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { Pool } from 'pg';
-import { getModelConfig } from './_chutesService.js';
+import { getModelConfig } from './_aiService.js';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -23,18 +23,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     environment: process.env.NODE_ENV || 'not set',
     vercel: process.env.VERCEL || 'not set',
     envVars: {
-      CHUTES_API_KEY: process.env.CHUTES_API_KEY ? `✅ Set (${process.env.CHUTES_API_KEY.substring(0, 10)}...)` : '❌ NOT SET',
+      GITHUB_TOKEN: process.env.GITHUB_TOKEN ? `✅ Set (${process.env.GITHUB_TOKEN.substring(0, 10)}...)` : '❌ NOT SET',
+      GROQ_API_KEY: process.env.GROQ_API_KEY ? `✅ Set (${process.env.GROQ_API_KEY.substring(0, 10)}...)` : '❌ NOT SET',
       DATABASE_URL: process.env.DATABASE_URL ? `✅ Set (${process.env.DATABASE_URL.substring(0, 30)}...)` : '❌ NOT SET',
     },
     tests: {}
   };
 
-  // Test 1: Check if chutesService can be imported
+  // Test 1: Check if aiService can be imported
   try {
-    diagnostics.tests.chutesServiceImport = '✅ Success';
+    diagnostics.tests.aiServiceImport = '✅ Success';
     diagnostics.tests.modelConfig = getModelConfig();
   } catch (error) {
-    diagnostics.tests.chutesServiceImport = `❌ Failed: ${(error as Error).message}`;
+    diagnostics.tests.aiServiceImport = `❌ Failed: ${(error as Error).message}`;
   }
 
   // Test 2: Check if fetch is available
@@ -44,10 +45,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     diagnostics.tests.fetchAvailable = `❌ Error: ${(error as Error).message}`;
   }
 
-  // Test 3: Quick Chutes API connectivity test (no actual call, just check key format)
-  if (process.env.CHUTES_API_KEY) {
-    const key = process.env.CHUTES_API_KEY;
-    diagnostics.tests.apiKeyFormat = key.startsWith('cpk_') ? '✅ Valid format (cpk_...)' : `⚠️ Unexpected format: ${key.substring(0, 5)}...`;
+  // Test 3: Quick API connectivity test (no actual call, just check key format)
+  if (process.env.GITHUB_TOKEN) {
+    const key = process.env.GITHUB_TOKEN;
+    diagnostics.tests.githubTokenFormat = key.startsWith('ghp_') || key.startsWith('github_pat_') ? '✅ Valid format' : `⚠️ Unexpected format: ${key.substring(0, 8)}...`;
+  }
+  if (process.env.GROQ_API_KEY) {
+    const key = process.env.GROQ_API_KEY;
+    diagnostics.tests.groqApiKeyFormat = key.startsWith('gsk_') ? '✅ Valid format (gsk_...)' : `⚠️ Unexpected format: ${key.substring(0, 5)}...`;
   }
 
   // Test 4: Database connectivity

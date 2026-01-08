@@ -508,7 +508,7 @@ export class WhatsAppWebhookProcessor {
       queueSize: this.eventQueue.length,
       rateLimitersActive: this.rateLimiters.size,
       eventCacheSize: this.eventCache.size,
-      lastProcessedAt: lastProcessedEvent?.processededAt,
+      lastProcessedAt: lastProcessedEvent?.processedAt,
     };
   }
 

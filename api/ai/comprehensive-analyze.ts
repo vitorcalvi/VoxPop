@@ -1,5 +1,29 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { comprehensiveAnalyze } from '../_chutesService.js';
+import { comprehensiveAnalyze } from '../_aiService.js';
+
+const isProduction = process.env.NODE_ENV === 'production';
+
+const log = (...args: any[]) => {
+  if (!isProduction) {
+    console.log(...args);
+  }
+};
+
+const logError = (...args: any[]) => {
+  if (isProduction) {
+    console.error(...args);
+  } else {
+    console.error(...args);
+  }
+};
+
+const logWarn = (...args: any[]) => {
+  if (isProduction) {
+    console.warn(...args);
+  } else {
+    console.warn(...args);
+  }
+};
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
@@ -17,7 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    console.log('📝 comprehensive-analyze request received');
+    log('📝 comprehensive-analyze request received');
     const { subject, details, images, language } = req.body;
 
     // Calculate and log payload size for debugging
@@ -27,7 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       `Image ${i + 1}: ${(img?.length / 1024).toFixed(1)}KB`
     ) || [];
 
-    console.log('📦 Request data:', {
+    log('📦 Request data:', {
       subject,
       details: details?.substring(0, 100),
       language,
@@ -37,19 +61,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     if (!subject || !details) {
-      console.warn('⚠️ Missing required fields');
+      logWarn('⚠️ Missing required fields');
       return res.status(400).json({ error: 'Subject and details are required' });
     }
 
-    // Use Chutes Plus AI for comprehensive analysis
-    console.log('🤖 Calling comprehensiveAnalyze...');
+    log('🤖 Calling comprehensiveAnalyze...');
     const result = await comprehensiveAnalyze(subject, details, images, language);
 
-    console.log('✅ Sending successful response');
+    log('✅ Sending successful response');
     return res.status(200).json(result);
   } catch (error) {
-    console.error('❌ Error in comprehensive AI analysis:', error);
-    console.error('Error stack:', (error as Error).stack);
+    logError('❌ Error in comprehensive AI analysis:', error);
+    logError('Error stack:', (error as Error).stack);
     return res.status(500).json({ error: 'Failed to analyze feedback', details: (error as Error).message });
   }
 }

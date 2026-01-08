@@ -1,5 +1,15 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { analyzeFeedback } from './_chutesService.js';
+import { analyzeFeedback } from './_aiService.js';
+
+const isProduction = process.env.NODE_ENV === 'production';
+
+const logError = (...args: any[]) => {
+  if (isProduction) {
+    console.error(...args);
+  } else {
+    console.error(...args);
+  }
+};
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
@@ -21,7 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const result = await analyzeFeedback(title, description, screenshot);
     return res.status(200).json(result);
   } catch (error) {
-    console.error('Analysis Error:', error);
+    logError('Analysis Error:', error);
     return res.status(500).json({ error: 'Failed to analyze feedback' });
   }
 }

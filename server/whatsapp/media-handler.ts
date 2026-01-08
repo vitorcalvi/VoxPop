@@ -476,7 +476,7 @@ export class WhatsAppMediaHandler {
         return {
           url: `http://localhost:5000${path}`,
           path,
-          provider: 'local',
+          provider: 'local' as const,
         };
       }
 
@@ -484,7 +484,7 @@ export class WhatsAppMediaHandler {
         return {
           url: `https://s3.amazonaws.com/bucket${path}`,
           path,
-          provider: 's3',
+          provider: 's3' as const,
         };
       }
 
@@ -492,14 +492,14 @@ export class WhatsAppMediaHandler {
         return {
           url: `https://storage.googleapis.com/bucket${path}`,
           path,
-          provider: 'gcs',
+          provider: 'gcs' as const,
         };
       }
 
       return {
         url: path,
         path,
-        provider: 'local',
+        provider: 'local' as const,
       };
     } catch (error) {
       throw new Error(`Failed to store media: ${(error as Error).message}`);
