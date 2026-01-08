@@ -4,8 +4,9 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "packageManager": "npm@10.8.2",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.18.0"
   },
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",

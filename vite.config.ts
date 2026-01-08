@@ -29,13 +29,22 @@ export default defineConfig(({ mode }) => {
           },
           build: {
             target: 'es2015',
-            minify: 'terser',
+            // Use esbuild (Vite's default) - faster and built-in, no extra dependency needed
+            // Note: terser requires explicit installation since Vite v3
+            minify: 'esbuild',
             cssMinify: true,
             rollupOptions: {
               output: {
-                manualChunks: {
-                  'react': ['react', 'react-dom'],
-                  'vendor': ['@google/genai']
+                // Dynamic manualChunks to avoid empty chunk warnings
+                manualChunks(id) {
+                  // React core libraries
+                  if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+                    return 'react';
+                  }
+                  // Only create vendor chunk if @google/genai is actually imported in frontend
+                  if (id.includes('node_modules/@google/genai')) {
+                    return 'vendor';
+                  }
                 }
               }
             }
