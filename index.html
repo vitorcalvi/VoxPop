@@ -37,6 +37,70 @@
 
     <title>Feedback - AI-Powered Community Voice</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Dynamic OG image updater -->
+    <script>
+        (function() {
+            // Get language from localStorage or detect from browser
+            const getLanguage = () => {
+                const stored = localStorage.getItem('voxpop_language');
+                if (stored && ['en', 'es', 'pt'].includes(stored)) {
+                    return stored;
+                }
+                const browserLang = navigator.language.toLowerCase();
+                if (browserLang.startsWith('es')) return 'es';
+                if (browserLang.startsWith('pt')) return 'pt';
+                return 'en';
+            };
+
+            const translations = {
+                en: {
+                    title: 'Feedback - AI-Powered Community Voice',
+                    description: 'Share your feedback, get AI-powered insights, and help shape the product.'
+                },
+                es: {
+                    title: 'Feedback - Voz de la Comunidad Impulsada por IA',
+                    description: 'Comparte tus comentarios, obtén insights impulsados por IA y ayuda a dar forma al producto.'
+                },
+                pt: {
+                    title: 'Feedback - Voz da Comunidade Impulsionada por IA',
+                    description: 'Compartilhe seu feedback, obtenha insights impulsionados por IA e ajude a moldar o produto.'
+                }
+            };
+
+            const lang = getLanguage();
+            const baseUrl = 'https://feedback.dyagnosys.com';
+            const ogImageUrl = `${baseUrl}/api/og?lang=${lang}`;
+            const t = translations[lang];
+
+            // Update meta tags
+            document.querySelector('meta[property="og:image"]').setAttribute('content', ogImageUrl);
+            document.querySelector('meta[name="twitter:image"]').setAttribute('content', ogImageUrl);
+            document.querySelector('meta[property="og:title"]').setAttribute('content', t.title);
+            document.querySelector('meta[name="twitter:title"]').setAttribute('content', t.title);
+            document.querySelector('meta[property="og:description"]').setAttribute('content', t.description);
+            document.querySelector('meta[name="twitter:description"]').setAttribute('content', t.description);
+            document.querySelector('title').textContent = t.title;
+
+            // Listen for language changes
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'voxpop_language' && e.newValue) {
+                    const newLang = e.newValue;
+                    const newOgImageUrl = `${baseUrl}/api/og?lang=${newLang}`;
+                    const newT = translations[newLang];
+
+                    document.querySelector('meta[property="og:image"]').setAttribute('content', newOgImageUrl);
+                    document.querySelector('meta[name="twitter:image"]').setAttribute('content', newOgImageUrl);
+                    document.querySelector('meta[property="og:title"]').setAttribute('content', newT.title);
+                    document.querySelector('meta[name="twitter:title"]').setAttribute('content', newT.title);
+                    document.querySelector('meta[property="og:description"]').setAttribute('content', newT.description);
+                    document.querySelector('meta[name="twitter:description"]').setAttribute('content', newT.description);
+                    document.querySelector('title').textContent = newT.title;
+                }
+            });
+        })();
+    </script>
+
     <script type="importmap">
 {
   "imports": {

@@ -202,4 +202,12 @@ export interface TranslationKeys {
     minutesAgo: string;
     hoursAgo: string;
   };
+
+  // Metadata for SEO and OG
+  metadata: {
+    title: string;
+    subtitle: string;
+    description: string;
+    cta: string;
+  };
 }

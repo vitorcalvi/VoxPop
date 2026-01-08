@@ -16,9 +16,10 @@
       }
     },
     {
-      "src": "/api/og",
+      "src": "/api/og(\\?.*)?",
       "headers": {
-        "Cache-Control": "public, max-age=0, s-maxage=3600"
+        "Cache-Control": "public, max-age=0, s-maxage=3600",
+        "Content-Type": "image/png"
       }
     },
     {

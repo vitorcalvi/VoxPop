@@ -145,5 +145,11 @@
     "justNow": "Just now",
     "minutesAgo": "{count} minutes ago",
     "hoursAgo": "{count} hours ago"
+  },
+  "metadata": {
+    "title": "Feedback - AI-Powered Community Voice",
+    "subtitle": "AI-Powered Community Feedback",
+    "description": "Share your feedback, get AI-powered insights, and help shape the product.",
+    "cta": "Join the conversation →"
   }
 }

@@ -29,6 +29,18 @@ const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'voxpop_language';
 
+// Function to update OG meta tags
+const updateMetaTags = (lang: Language) => {
+  const baseUrl = window.location.origin;
+  const ogImageUrl = `${baseUrl}/api/og?lang=${lang}`;
+
+  // Update OG image
+  const ogImage = document.querySelector('meta[property="og:image"]');
+  const twitterImage = document.querySelector('meta[name="twitter:image"]');
+  if (ogImage) ogImage.setAttribute('content', ogImageUrl);
+  if (twitterImage) twitterImage.setAttribute('content', ogImageUrl);
+};
+
 // Get nested value from object using dot notation
 const getNestedValue = (obj: any, path: string): string => {
   const keys = path.split('.');
@@ -75,11 +87,13 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLanguageState(lang);
     localStorage.setItem(STORAGE_KEY, lang);
     document.documentElement.lang = lang;
+    updateMetaTags(lang);
   }, []);
 
-  // Set document language on mount
+  // Set document language on mount and update meta tags
   useEffect(() => {
     document.documentElement.lang = language;
+    updateMetaTags(language);
   }, [language]);
 
   // Translation function with parameter interpolation

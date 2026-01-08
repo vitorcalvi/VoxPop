@@ -1,11 +1,35 @@
 import { ImageResponse } from '@vercel/og';
 
+// Import translations
+import enTranslations from '../i18n/locales/en.json';
+import esTranslations from '../i18n/locales/es.json';
+import ptTranslations from '../i18n/locales/pt.json';
+
 // Edge runtime is required for @vercel/og
 export const config = {
   runtime: 'edge',
 };
 
+type Language = 'en' | 'es' | 'pt';
+
+const translations = {
+  en: enTranslations,
+  es: esTranslations,
+  pt: ptTranslations,
+};
+
 export default async function handler(req: Request) {
+  // Parse URL to get language parameter
+  const { searchParams } = new URL(req.url);
+  const langParam = searchParams.get('lang') || 'en';
+
+  // Validate and set language
+  const lang: Language = ['en', 'es', 'pt'].includes(langParam)
+    ? (langParam as Language)
+    : 'en';
+
+  const t = translations[lang];
+
   return new ImageResponse(
     (
       <div
@@ -64,7 +88,7 @@ export default async function handler(req: Request) {
               textAlign: 'center',
             }}
           >
-            AI-Powered Community Feedback
+            {t.metadata.subtitle}
           </p>
         </div>
 
@@ -89,7 +113,7 @@ export default async function handler(req: Request) {
             opacity: 0.95,
           }}
         >
-          Share your feedback, get AI-powered insights, and help shape the product.
+          {t.metadata.description}
         </p>
 
         {/* Footer/CTA */}
@@ -110,7 +134,7 @@ export default async function handler(req: Request) {
               fontWeight: '600',
             }}
           >
-            Join the conversation →
+            {t.metadata.cta}
           </span>
         </div>
 

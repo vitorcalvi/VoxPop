@@ -145,5 +145,11 @@
     "justNow": "Agora mesmo",
     "minutesAgo": "Há {count} minutos",
     "hoursAgo": "Há {count} horas"
+  },
+  "metadata": {
+    "title": "Feedback - Voz da Comunidade Impulsionada por IA",
+    "subtitle": "Feedback Comunitário Impulsionado por IA",
+    "description": "Compartilhe seu feedback, obtenha insights impulsionados por IA e ajude a moldar o produto.",
+    "cta": "Junte-se à conversa →"
   }
 }
